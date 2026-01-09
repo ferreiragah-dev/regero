@@ -5,9 +5,7 @@
   <title>Dashboard | Regero</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<link rel="stylesheet" href="/styles.css">
-<script src="/app.js"></script>
-
+  <link rel="stylesheet" href="/styles.css" />
 
   <style>
     .board {
@@ -22,7 +20,7 @@
     .card {
       background: #ffffff;
       border: 1px solid #e5e7eb;
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 18px;
     }
 
@@ -30,31 +28,35 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 14px;
     }
 
     .symbol {
-      font-size: 17px;
+      font-size: 18px;
       font-weight: 600;
     }
 
-    .toggle {
+    .monitor {
       font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .timeframes {
       display: flex;
       gap: 6px;
-      margin: 10px 0;
+      margin-bottom: 14px;
       flex-wrap: wrap;
     }
 
     .tf {
-      padding: 4px 8px;
+      padding: 5px 10px;
       font-size: 11px;
       border-radius: 999px;
       border: 1px solid #e5e7eb;
       cursor: pointer;
+      color: #334155;
       background: #ffffff;
     }
 
@@ -66,76 +68,69 @@
 
     .status {
       font-size: 12px;
-      margin-top: 10px;
       color: #64748b;
+      line-height: 1.5;
     }
   </style>
 </head>
 <body>
 
-<!-- TOPBAR -->
 <div class="topbar">
-  <div>
-    Olá, <strong id="username"></strong>
-  </div>
+  <div>Olá, <strong id="username"></strong></div>
   <div class="nav">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="manage.html">Gerenciar</a>
-    <a href="profile.html">Perfil</a>
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/manage.html">Gerenciar</a>
+    <a href="/profile.html">Perfil</a>
   </div>
 </div>
 
-<!-- BOARD -->
 <div class="board" id="board"></div>
 
-<script src="app.js"></script>
+<script src="/app.js"></script>
 <script>
-  /* ============================
-     DASHBOARD INTEGRATION
-     ============================ */
-
   const user = getUser();
   document.getElementById('username').innerText = user.name || 'Usuário';
 
-  const board = document.getElementById('board');
   const timeframes = ['M1','M5','M15','M30','H1','D1'];
+  const board = document.getElementById('board');
+
+  function normalizeStocks(rawStocks) {
+    return rawStocks.map(s => ({
+      symbol: s.symbol,
+      monitor: !!s.monitor,
+      tf: s.tf || 'M15'
+    }));
+  }
+
+  let stocks = normalizeStocks(getStocks());
 
   function renderDashboard() {
-    const stocks = getStocks();
-
-    if (!stocks.length) {
-      board.innerHTML = '<p>Nenhuma ação cadastrada.</p>';
-      return;
-    }
-
-    board.innerHTML = stocks.map((stock, index) => `
+    board.innerHTML = stocks.map((s, i) => `
       <div class="card">
-        
-        <div class="card-header">
-          <div class="symbol">${stock.symbol}</div>
 
-          <div class="toggle">
-            <label>
-              <input type="checkbox"
-                     ${stock.monitor ? 'checked' : ''}
-                     onchange="toggleMonitor(${index})">
-              Monitorar
-            </label>
-          </div>
+        <div class="card-header">
+          <div class="symbol">${s.symbol}</div>
+
+          <label class="monitor">
+            <input type="checkbox"
+                   ${s.monitor ? 'checked' : ''}
+                   onchange="toggleMonitor(${i})">
+            Monitorar
+          </label>
         </div>
 
         <div class="timeframes">
           ${timeframes.map(tf => `
-            <div class="tf ${stock.tf === tf ? 'active' : ''}"
-                 onclick="setTimeframe(${index}, '${tf}')">
+            <div class="tf ${s.tf === tf ? 'active' : ''}"
+                 onclick="setTimeframe(${i}, '${tf}')">
               ${tf}
             </div>
           `).join('')}
         </div>
 
         <div class="status">
-          Timeframe selecionado: <strong>${stock.tf}</strong><br>
-          Monitoramento: <strong>${stock.monitor ? 'Ativo' : 'Inativo'}</strong>
+          Timeframe ativo: <strong>${s.tf}</strong><br>
+          Status: <strong>${s.monitor ? 'Monitorando' : 'Desativado'}</strong>
         </div>
 
       </div>
@@ -143,14 +138,12 @@
   }
 
   function toggleMonitor(index) {
-    const stocks = getStocks();
     stocks[index].monitor = !stocks[index].monitor;
     saveStocks(stocks);
     renderDashboard();
   }
 
   function setTimeframe(index, tf) {
-    const stocks = getStocks();
     stocks[index].tf = tf;
     saveStocks(stocks);
     renderDashboard();
