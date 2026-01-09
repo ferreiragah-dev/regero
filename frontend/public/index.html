@@ -169,10 +169,11 @@
 <div class="board" id="board"></div>
 
 <script>
-const USER_ID = localStorage.getItem("user_id");
+const token = localStorage.getItem('access_token');
+const userId = localStorage.getItem('user_id');
 
-if (!USER_ID) {
-  window.location.href = "/login.html";
+if (!token || !userId) {
+  window.location.href = '/login.html';
 }
 
   const API_BASE_URL =
@@ -192,8 +193,8 @@ if (!USER_ID) {
 
   async function fetchDashboard() {
     const res = await fetch(`${API_BASE_URL}/dashboard`, {
-      headers: {
-  "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+headers: {
+  Authorization: `Bearer ${token}`
 }
 
     });
