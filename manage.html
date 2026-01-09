@@ -1,47 +1,100 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Gerenciar Ações</title>
-<link rel="stylesheet" href="/styles.css">
-<script src="/app.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8fafc;
+      margin: 0;
+    }
+
+    header {
+      background: #ffffff;
+      padding: 16px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    nav a {
+      margin-left: 12px;
+      text-decoration: none;
+      color: #0f172a;
+      font-weight: 500;
+    }
+
+    .container {
+      padding: 24px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
 </head>
 <body>
 
-<div class="topbar">
+<header>
   <strong>Gerenciar Ações</strong>
-  <div class="nav">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="profile.html">Perfil</a>
-  </div>
-</div>
+  <nav>
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/profile.html">Perfil</a>
+  </nav>
+</header>
 
 <div class="container" id="list"></div>
 
-<script src="app.js"></script>
 <script>
   const list = document.getElementById('list');
-  let stocks = getStocks();
+
+  function getStocks() {
+    return JSON.parse(localStorage.getItem('stocks')) || [
+      { symbol: 'PETR4', monitor: true },
+      { symbol: 'VALE3', monitor: false },
+      { symbol: 'ITUB4', monitor: true }
+    ];
+  }
+
+  function saveStocks(stocks) {
+    localStorage.setItem('stocks', JSON.stringify(stocks));
+  }
 
   function render() {
+    const stocks = getStocks();
+
     list.innerHTML = stocks.map((s, i) => `
       <div class="card">
         <strong>${s.symbol}</strong>
-        <div style="margin-top:10px">
-          <label>
-            <input type="checkbox"
-                   ${s.monitor ? 'checked' : ''}
-                   onchange="toggle(${i})">
-            Monitorar
-          </label>
-        </div>
+
+        <label>
+          <input type="checkbox"
+                 ${s.monitor ? 'checked' : ''}
+                 onchange="toggle(${i})">
+          Monitorar
+        </label>
       </div>
     `).join('');
   }
 
-  function toggle(i) {
-    stocks[i].monitor = !stocks[i].monitor;
+  function toggle(index) {
+    const stocks = getStocks();
+    stocks[index].monitor = !stocks[index].monitor;
     saveStocks(stocks);
+    render();
   }
 
   render();

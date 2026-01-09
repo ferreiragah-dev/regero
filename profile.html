@@ -1,37 +1,105 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Perfil</title>
-<link rel="stylesheet" href="/styles.css">
-<script src="/app.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8fafc;
+      margin: 0;
+    }
+
+    header {
+      background: #ffffff;
+      padding: 16px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    nav a {
+      margin-left: 12px;
+      text-decoration: none;
+      color: #0f172a;
+      font-weight: 500;
+    }
+
+    .container {
+      padding: 24px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    label {
+      font-size: 14px;
+      color: #334155;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      margin-bottom: 16px;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    button {
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: none;
+      background: #2563eb;
+      color: #ffffff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
 
-<div class="topbar">
+<header>
   <strong>Perfil</strong>
-  <div class="nav">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="manage.html">Gerenciar</a>
-  </div>
-</div>
+  <nav>
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/manage.html">Gerenciar</a>
+  </nav>
+</header>
 
 <div class="container">
   <div class="card">
-    <h3>Informações do Usuário</h3>
-
     <label>Nome</label>
-    <input id="name"/>
+    <input id="name">
 
     <label>Email</label>
-    <input id="email"/>
+    <input id="email">
 
-    <button class="primary" onclick="save()">Salvar</button>
+    <button onclick="save()">Salvar</button>
   </div>
 </div>
 
-<script src="app.js"></script>
 <script>
+  function getUser() {
+    return JSON.parse(localStorage.getItem('user')) || {
+      name: 'Gabriel',
+      email: 'gabriel@email.com'
+    };
+  }
+
+  function saveUser(user) {
+    localStorage.setItem('user', JSON.stringify(user));
+  }
+
   const user = getUser();
   document.getElementById('name').value = user.name;
   document.getElementById('email').value = user.email;
@@ -41,7 +109,7 @@
       name: name.value,
       email: email.value
     });
-    alert('Perfil atualizado');
+    alert('Perfil salvo');
   }
 </script>
 
