@@ -2,105 +2,300 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Dashboard | Regero</title>
+  <title>Dashboard Ações</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <!-- CSS ABSOLUTO -->
-  <link rel="stylesheet" href="/styles.css">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   Roboto, Helvetica, Arial, sans-serif;
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    /* ===== TOPBAR ===== */
+    .topbar {
+      height: 64px;
+      padding: 0 28px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .welcome {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+    }
+
+    .btn.primary {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+    }
+
+    /* ===== BOARD ===== */
+    .board {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+      align-items: start;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 18px;
+      transition: box-shadow 0.2s ease;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    /* ===== HEADER ===== */
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .symbol {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    /* ===== TOGGLE MONITORAR ===== */
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .switch {
+      width: 36px;
+      height: 20px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      position: relative;
+      transition: background 0.2s ease;
+    }
+
+    .switch::after {
+      content: '';
+      width: 16px;
+      height: 16px;
+      background: #ffffff;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,.15);
+    }
+
+    .switch.on {
+      background: #16a34a;
+    }
+
+    .switch.on::after {
+      transform: translateX(16px);
+    }
+
+    /* ===== CONTENT ===== */
+    .company {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+
+    .price {
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .variation {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .up { color: #16a34a; }
+    .down { color: #dc2626; }
+
+    /* ===== EXPAND ===== */
+    .expand {
+      margin-top: 14px;
+      display: flex;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .chevron {
+      width: 20px;
+      height: 20px;
+      border-right: 2px solid #64748b;
+      border-bottom: 2px solid #64748b;
+      transform: rotate(45deg);
+      transition: transform 0.25s ease;
+    }
+
+    .expanded .chevron {
+      transform: rotate(-135deg);
+    }
+
+    .details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .expanded .details {
+      max-height: 240px;
+      margin-top: 14px;
+    }
+
+    .details-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 6px 0;
+      border-bottom: 1px dashed #e5e7eb;
+    }
+
+    .details-row:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      color: #64748b;
+    }
+  </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div>Olá, <strong id="username">bem-vindo</strong></div>
-  <div class="nav">
-    <a href="/profile.html">Conta</a>
-    <a href="/manage.html">Monitorar</a>
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="welcome">Olá, <strong>bem-vindo</strong></div>
+    <div class="actions">
+      <button class="btn">Conta</button>
+      <button class="btn primary">Monitorar</button>
+    </div>
   </div>
-</div>
 
-<div class="board" id="board"></div>
+  <!-- BOARD -->
+  <div class="board" id="board"></div>
 
-<script src="/app.js"></script>
-<script>
-  const user = getUser();
-  document.getElementById('username').innerText = user.name || 'bem-vindo';
+  <script>
+    const stocks = [
+      {
+        symbol: 'PETR4',
+        name: 'Petrobras PN',
+        price: 36.12,
+        var: 1.82,
+        monitor: true,
+        open: 35.40,
+        high: 36.80,
+        low: 35.10,
+        volume: '42.3M'
+      },
+      {
+        symbol: 'VALE3',
+        name: 'Vale',
+        price: 69.45,
+        var: -0.94,
+        monitor: false,
+        open: 70.10,
+        high: 71.00,
+        low: 69.20,
+        volume: '31.7M'
+      }
+    ];
 
-  const board = document.getElementById('board');
-  const timeframes = ['M1','M5','M15','M30','H1','D1'];
+    const board = document.getElementById('board');
 
-  function normalize(raw) {
-    return raw.map(s => ({
-      symbol: s.symbol,
-      name: s.name || '',
-      monitor: !!s.monitor,
-      tf: s.tf || 'M15',
-      price: s.price || (s.symbol === 'PETR4' ? 36.12 : 69.45),
-      var: s.var ?? (s.symbol === 'PETR4' ? 1.82 : -0.94),
-      expanded: false
-    }));
-  }
-
-  let stocks = normalize(getStocks());
-
-  function render() {
-    board.innerHTML = stocks.map((s, i) => `
-      <div class="card ${s.expanded ? 'expanded' : ''}">
-
-        <div class="card-header">
-          <div>
+    function render() {
+      board.innerHTML = stocks.map((s, i) => `
+        <div class="card ${s.expanded ? 'expanded' : ''}">
+          <div class="card-header">
             <div class="symbol">${s.symbol}</div>
-            <div class="company">${s.name}</div>
+            <div class="toggle" onclick="toggleMonitor(${i})">
+              <span>Monitorar</span>
+              <div class="switch ${s.monitor ? 'on' : ''}"></div>
+            </div>
           </div>
 
-          <div class="toggle">
-            Monitorar
-            <div class="switch ${s.monitor ? 'on' : ''}"
-                 onclick="toggleMonitor(${i})"></div>
+          <div class="company">${s.name}</div>
+          <div class="price">R$ ${s.price.toFixed(2)}</div>
+
+          <div class="variation ${s.var >= 0 ? 'up' : 'down'}">
+            ${s.var >= 0 ? '+' : ''}${s.var}%
+          </div>
+
+          <div class="details">
+            <div class="details-row">
+              <span class="label">Abertura</span>
+              <span>R$ ${s.open.toFixed(2)}</span>
+            </div>
+            <div class="details-row">
+              <span class="label">Máxima</span>
+              <span>R$ ${s.high.toFixed(2)}</span>
+            </div>
+            <div class="details-row">
+              <span class="label">Mínima</span>
+              <span>R$ ${s.low.toFixed(2)}</span>
+            </div>
+            <div class="details-row">
+              <span class="label">Volume</span>
+              <span>${s.volume}</span>
+            </div>
+          </div>
+
+          <div class="expand" onclick="toggleExpand(${i})">
+            <div class="chevron"></div>
           </div>
         </div>
+      `).join('');
+    }
 
-        <div class="price">R$ ${s.price.toFixed(2)}</div>
+    function toggleMonitor(index) {
+      stocks[index].monitor = !stocks[index].monitor;
+      render();
+    }
 
-        <div class="variation ${s.var >= 0 ? 'up' : 'down'}">
-          ${s.var >= 0 ? '+' : ''}${s.var}%
-        </div>
+    function toggleExpand(index) {
+      stocks[index].expanded = !stocks[index].expanded;
+      render();
+    }
 
-        <div class="expand" onclick="toggleExpand(${i})">
-          <div class="chevron"></div>
-        </div>
-
-        <div class="details">
-          <div class="timeframes">
-            ${timeframes.map(tf => `
-              <div class="tf ${s.tf === tf ? 'active' : ''}"
-                   onclick="setTF(${i}, '${tf}')">${tf}</div>
-            `).join('')}
-          </div>
-        </div>
-
-      </div>
-    `).join('');
-  }
-
-  function toggleMonitor(i) {
-    stocks[i].monitor = !stocks[i].monitor;
-    saveStocks(stocks);
     render();
-  }
-
-  function toggleExpand(i) {
-    stocks[i].expanded = !stocks[i].expanded;
-    render();
-  }
-
-  function setTF(i, tf) {
-    stocks[i].tf = tf;
-    saveStocks(stocks);
-    render();
-  }
-
-  render();
-</script>
+  </script>
 
 </body>
 </html>
