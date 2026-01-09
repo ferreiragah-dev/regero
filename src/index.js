@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+
 import { router } from './routes.js';
 import { updateStockState } from './jobs.js';
 
@@ -8,34 +9,55 @@ dotenv.config();
 
 const app = express();
 
+/* ===============================
+   MIDDLEWARES
+================================ */
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-app.use('/api', router);
+/* ===============================
+   ROOT HEALTHCHECK (OBRIGATÓRIO)
+   EasyPanel testa GET /
+================================ */
+app.get('/', (req, res) => {
+  res.status(200).send('OK');
+});
 
-// Healthcheck (EasyPanel)
+/* ===============================
+   HEALTH EXPLÍCITO (opcional)
+================================ */
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
+/* ===============================
+   API ROUTES
+================================ */
+app.use('/api', router);
+
+/* ===============================
+   SERVER
+================================ */
 const PORT = process.env.PORT || 3000;
 
-// 🔥 START SERVER PRIMEIRO
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// 🔒 JOB PROTEGIDO (NUNCA derruba o processo)
+/* ===============================
+   SAFE BACKGROUND JOB
+   (NUNCA derruba o processo)
+================================ */
 async function safeJob() {
   try {
     await updateStockState();
   } catch (err) {
-    console.error('[JOB ERROR]', err.message);
+    console.error('[JOB ERROR]', err?.message || err);
   }
 }
 
-// primeira execução (sem await)
+// primeira execução
 safeJob();
 
-// loop
+// loop a cada 1 minuto
 setInterval(safeJob, 60_000);
