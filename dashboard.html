@@ -25,31 +25,6 @@
       justify-content: space-between;
     }
 
-    .welcome {
-      font-size: 16px;
-      font-weight: 500;
-    }
-
-    .actions {
-      display: flex;
-      gap: 12px;
-    }
-
-    .btn {
-      padding: 8px 16px;
-      border-radius: 10px;
-      font-size: 14px;
-      cursor: pointer;
-      border: 1px solid #e5e7eb;
-      background: #ffffff;
-    }
-
-    .btn.primary {
-      background: #2563eb;
-      color: #ffffff;
-      border: none;
-    }
-
     .board {
       max-width: 1280px;
       margin: 0 auto;
@@ -96,7 +71,6 @@
       background: #e5e7eb;
       border-radius: 999px;
       position: relative;
-      transition: background 0.2s ease;
     }
 
     .switch::after {
@@ -119,43 +93,20 @@
       transform: translateX(16px);
     }
 
-    .timeframes {
-      display: flex;
-      gap: 6px;
-      margin: 10px 0 14px;
-      flex-wrap: wrap;
-    }
-
-    .tf {
-      padding: 4px 8px;
-      font-size: 11px;
-      border-radius: 999px;
-      border: 1px solid #e5e7eb;
-      color: #64748b;
-      cursor: pointer;
-    }
-
-    .tf.active {
-      background: #0f172a;
-      color: #ffffff;
-      border-color: #0f172a;
-    }
-
     .company {
       font-size: 12px;
       color: #64748b;
-      margin-bottom: 10px;
+      margin: 10px 0;
     }
 
     .price {
       font-size: 26px;
       font-weight: 600;
-      margin-bottom: 6px;
     }
 
     .variation {
       font-size: 14px;
-      font-weight: 500;
+      margin-bottom: 6px;
     }
 
     .up { color: #16a34a; }
@@ -169,7 +120,7 @@
     }
 
     .expanded .details {
-      max-height: 300px;
+      max-height: 500px;
     }
 
     .details-row {
@@ -205,19 +156,13 @@
 <body>
 
   <div class="topbar">
-    <div class="welcome">Olá, <strong>bem-vindo</strong></div>
-    <div class="actions">
-      <button class="btn">Conta</button>
-      <button class="btn primary">Monitorar</button>
-    </div>
+    <strong>Dashboard Fintech</strong>
   </div>
 
   <div class="board" id="board"></div>
 
   <script>
     const N8N_URL = 'https://n8n.lowcodeforward.com/webhook/stocks';
-
-    const timeframes = ['M1','M5','M15','M30','H1','D1'];
     const board = document.getElementById('board');
     let stocks = [];
 
@@ -242,10 +187,13 @@
 
           const price = item.last_price ?? item.close_price ?? 0;
           const open = item.open_price ?? 0;
+          const variation = open ? (((price - open) / open) * 100).toFixed(2) : 0;
 
-          const variation = open && price
-            ? (((price - open) / open) * 100).toFixed(2)
-            : 0;
+          const history = existing?.history || [];
+          if (existing?.monitor) {
+            history.push({ time: new Date().toLocaleTimeString(), price });
+            if (history.length > 30) history.shift();
+          }
 
           return {
             symbol: item.symbol,
@@ -256,15 +204,15 @@
             high: price * 1.01,
             low: price * 0.99,
             volume: '—',
-            tf: existing?.tf || 'M5',
             monitor: existing?.monitor || false,
-            expanded: existing?.expanded || false
+            expanded: existing?.expanded || false,
+            history
           };
         });
 
         render();
       } catch (e) {
-        console.error('Erro ao atualizar dados', e);
+        console.error('Erro ao carregar dados', e);
       }
     }
 
@@ -279,13 +227,6 @@
             </div>
           </div>
 
-          <div class="timeframes">
-            ${timeframes.map(tf => `
-              <div class="tf ${s.tf === tf ? 'active' : ''}"
-                   onclick="setTF(${i}, '${tf}')">${tf}</div>
-            `).join('')}
-          </div>
-
           <div class="company">${s.name}</div>
           <div class="price">R$ ${s.price.toFixed(2)}</div>
 
@@ -298,6 +239,10 @@
             <div class="details-row"><span>Máxima</span><span>R$ ${s.high.toFixed(2)}</span></div>
             <div class="details-row"><span>Mínima</span><span>R$ ${s.low.toFixed(2)}</span></div>
             <div class="details-row"><span>Volume</span><span>${s.volume}</span></div>
+
+            <div style="margin-top:12px">
+              <canvas id="chart-${i}" width="220" height="80"></canvas>
+            </div>
           </div>
 
           <div class="expand" onclick="toggleExpand(${i})">
@@ -307,9 +252,47 @@
       `).join('');
     }
 
-    function toggleMonitor(i){ stocks[i].monitor=!stocks[i].monitor; render(); }
-    function toggleExpand(i){ stocks[i].expanded=!stocks[i].expanded; render(); }
-    function setTF(i,tf){ stocks[i].tf=tf; render(); }
+    function toggleMonitor(i) {
+      stocks[i].monitor = !stocks[i].monitor;
+      render();
+    }
+
+    function toggleExpand(i) {
+      stocks[i].expanded = !stocks[i].expanded;
+      render();
+      if (stocks[i].expanded) {
+        setTimeout(() => drawChart(`chart-${i}`, stocks[i].history), 50);
+      }
+    }
+
+    function drawChart(id, history) {
+      if (!history || history.length < 2) return;
+      const c = document.getElementById(id);
+      if (!c) return;
+
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, c.width, c.height);
+
+      const prices = history.map(h => h.price);
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+
+      const pad = 6;
+      const sx = (c.width - pad * 2) / (prices.length - 1);
+      const sy = (c.height - pad * 2) / (max - min || 1);
+
+      ctx.beginPath();
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineWidth = 2;
+
+      prices.forEach((p, i) => {
+        const x = pad + i * sx;
+        const y = c.height - pad - (p - min) * sy;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+
+      ctx.stroke();
+    }
 
     carregarDados();
     setInterval(carregarDados, 60000);
