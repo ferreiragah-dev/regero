@@ -4,23 +4,38 @@ import { supabase } from '../services/supabase.js';
 const router = express.Router();
 
 router.get('/dashboard', async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('stocks')
-      .select('symbol, open_price, close_price, last_price, variation')
-      .order('created_at', { ascending: false })
-      .limit(20);
+  const userId = req.headers['x-user-id'];
 
-    if (error) throw error;
-
-    res.json({
-      stocks: data,
-      updatedAt: new Date().toISOString()
-    });
-  } catch (err) {
-    console.error('Dashboard error:', err.message);
-    res.status(500).json({ error: 'Erro ao buscar dashboard' });
+  if (!userId) {
+    return res.status(401).json({ error: 'User not authenticated' });
   }
+
+  const { data, error } = await supabase
+    .from('user_stocks')
+    .select(`
+      symbol,
+      stocks (
+        open_price,
+        close_price,
+        last_price,
+        variation
+      )
+    `)
+    .eq('user_id', userId)
+    .eq('monitor', true);
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
+  const response = data.map(row => ({
+    symbol: row.symbol,
+    price: row.stocks?.last_price,
+    variation: row.stocks?.variation,
+    open: row.stocks?.open_price
+  }));
+
+  res.json(response);
 });
 
 export default router;

@@ -1,19 +1,23 @@
 import express from 'express';
 import cors from 'cors';
+
 import dashboardRoutes from './routes/dashboard.routes.js';
+import monitorRoutes from './routes/monitor.routes.js'; // 👈 IMPORTANTE
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
-app.get('/health', (_, res) => {
+app.use('/api', dashboardRoutes);
+app.use('/api', monitorRoutes); // 👈 ESSENCIAL
+
+app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.use('/api', dashboardRoutes);
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Backend running on port ${PORT}`);
 });
+console.log('Index loaded');
