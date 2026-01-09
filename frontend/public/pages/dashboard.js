@@ -1,24 +1,35 @@
-import { loadDashboardData, refreshDashboardData } from '../services/dashboard.service.js';
-import { store } from '../state/store.js';
-import { Board } from '../components/Board.js';
+import { loadDashboard } from '../services/dashboard.service.js';
 
-const boardEl = document.getElementById('board');
+const board = document.getElementById('board');
 
 export async function initDashboard() {
-  store.stocks = await loadDashboardData();
-  render();
+  board.innerHTML = '<p>Carregando...</p>';
 
-  setInterval(async () => {
-    await refreshDashboardData(store.stocks);
-    render();
-  }, 60_000);
+  try {
+    const { stocks } = await loadDashboard();
+
+    if (stocks.length === 0) {
+      board.innerHTML = `
+        <div style="padding: 32px; color: #64748b;">
+          Nenhuma ação monitorada ainda.
+        </div>
+      `;
+      return;
+    }
+
+    board.innerHTML = stocks.map(stock => `
+      <div class="card">
+        <div class="symbol">${stock.symbol}</div>
+        <div class="price">R$ ${stock.last_price ?? '-'}</div>
+      </div>
+    `).join('');
+
+  } catch (err) {
+    console.error(err);
+    board.innerHTML = `
+      <div style="padding: 32px; color: red;">
+        Erro ao carregar dashboard
+      </div>
+    `;
+  }
 }
-
-function render() {
-  boardEl.innerHTML = Board(store.stocks);
-}
-
-window.toggleMonitor = function (index) {
-  store.stocks[index].monitor = !store.stocks[index].monitor;
-  render();
-};

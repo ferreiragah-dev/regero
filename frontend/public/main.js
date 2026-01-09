@@ -1,3 +1,5 @@
 import { initDashboard } from './pages/dashboard.js';
 
-initDashboard();
+document.addEventListener('DOMContentLoaded', () => {
+  initDashboard();
+});

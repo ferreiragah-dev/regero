@@ -1,17 +1,13 @@
-import { supabase } from '../utils/supabase.js';
+// frontend/js/services/dashboard.service.js
 
-export async function loadDashboardData() {
-  const { data, error } = await supabase
-    .from('stocks')
-    .select('*')
-    .order('symbol');
+import { fetchDashboard } from '../api/dashboard.api.js';
 
-  if (error) {
-    throw error;
-  }
+export async function loadDashboard() {
+  const data = await fetchDashboard();
 
+  // GARANTIA DE SEGURANÇA
   return {
-    stocks: data,
-    updatedAt: new Date().toISOString()
+    stocks: Array.isArray(data.stocks) ? data.stocks : [],
+    updatedAt: data.updatedAt
   };
 }
