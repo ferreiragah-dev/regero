@@ -169,8 +169,11 @@
 <div class="board" id="board"></div>
 
 <script>
-  // ⚠️ TEMPORÁRIO — depois vem Supabase Auth
-  window.USER_ID = "8a7b6b7a-3c8f-4b65-9a8e-7d1e5c2d4f91";
+const USER_ID = localStorage.getItem("user_id");
+
+if (!USER_ID) {
+  window.location.href = "/login.html";
+}
 
   const API_BASE_URL =
     'https://stock-tracker-fintech-backend.watryz.easypanel.host/api';
@@ -189,7 +192,10 @@
 
   async function fetchDashboard() {
     const res = await fetch(`${API_BASE_URL}/dashboard`, {
-      headers: { 'x-user-id': window.USER_ID }
+      headers: {
+  "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+}
+
     });
     if (!res.ok) throw new Error('Erro ao buscar dashboard');
     return res.json();
@@ -250,10 +256,10 @@
     try {
       await fetch(`${API_BASE_URL}/monitor`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': window.USER_ID
-        },
+headers: {
+  "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+}
+,
         body: JSON.stringify({
           symbol: stock.symbol,
           monitor: newValue
@@ -273,7 +279,7 @@
       <div class="card">
         <div class="card-header">
           <div class="symbol">${s.symbol}</div>
-          <div class="toggle" onclick="toggleMonitor(${i})">
+          <div class="toggle" onclick="toggleMonitor('${s.symbol}', ${s.monitor})">
             <span>Monitorar</span>
             <div class="switch ${s.monitor ? 'on' : ''}"></div>
           </div>
