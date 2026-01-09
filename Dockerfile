@@ -3,11 +3,11 @@ FROM nginx:alpine
 # Remove config padrão
 RUN rm /etc/nginx/conf.d/default.conf
 
-# Copia configuração customizada
+# Copia config correta
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copia o dashboard
-COPY dashboard.html /usr/share/nginx/html/index.html
+# Copia TODOS os arquivos do site
+COPY . /usr/share/nginx/html
 
 EXPOSE 80
 
