@@ -170,13 +170,15 @@
 
 <script>
 const token = localStorage.getItem('access_token');
-const userId = localStorage.getItem('user_id');
 
-if (!token || !userId) {
-  window.location.href = '/login.html';
+  const userId = localStorage.getItem('user_id');
 
+  if (!userId) {
+    console.warn('Usuário não autenticado, redirecionando para login');
+    window.location.href = '/login.html';
+  } else {
     window.USER_ID = userId;
-}
+  }
 
   const API_BASE_URL =
     'https://stock-tracker-fintech-backend.watryz.easypanel.host/api';
