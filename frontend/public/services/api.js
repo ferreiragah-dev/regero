@@ -2,7 +2,7 @@ const API_BASE_URL =
   'https://stock-tracker-fintech-backend.watryz.easypanel.host/api';
 
 // ⚠️ por enquanto fixo (depois vira login real)
-const USER_ID = 'demo-user-001';
+const USER_ID = '8a7b6b7a-3c8f-4b65-9a8e-7d1e5c2d4f91';
 
 export async function fetchDashboard() {
   const res = await fetch(`${API_BASE_URL}/dashboard`, {

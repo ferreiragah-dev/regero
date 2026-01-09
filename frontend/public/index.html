@@ -167,7 +167,9 @@
   </div>
 
   <div class="board" id="board"></div>
-
+<script>
+  window.USER_ID = "8a7b6b7a-3c8f-4b65-9a8e-7d1e5c2d4f91";
+</script>
   <script>
     const API_BASE_URL =
       'https://stock-tracker-fintech-backend.watryz.easypanel.host/api';
@@ -175,31 +177,62 @@
     let stocks = [];
     const board = document.getElementById('board');
 
-    async function fetchDashboard() {
-      const res = await fetch(`${API_BASE_URL}/dashboard`);
-      if (!res.ok) throw new Error('Erro ao buscar dashboard');
-      return res.json();
+async function fetchDashboard() {
+  const res = await fetch(`${API_BASE_URL}/dashboard`, {
+    headers: {
+      'x-user-id': window.USER_ID
+    }
+  });
+
+  if (!res.ok) {
+    throw new Error('Erro ao buscar dashboard');
+  }
+
+  return res.json();
+}
+
+function formatPrice(value) {
+  if (typeof value !== 'number') return '--';
+  return value.toFixed(2);
+}
+
+function formatVariation(value) {
+  if (typeof value !== 'number') return '--';
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+}
+
+
+async function loadDashboard() {
+  try {
+    const data = await fetchDashboard();
+
+stocks = data.map(item => ({
+  symbol: item.symbol,
+  name: item.name || item.symbol,
+  price: Number(item.price) || 0,
+  variation: Number(item.variation) || 0,
+  open: Number(item.open) || 0,
+  high: Number(item.high) || 0,
+  low: Number(item.low) || 0,
+  monitor: true
+}));
+
+    if (stocks.length === 0) {
+      board.innerHTML = `
+        <div style="padding:32px;color:#64748b">
+          Nenhuma ação monitorada ainda.
+        </div>
+      `;
+      return;
     }
 
-    async function loadDashboard() {
-      try {
-        const { stocks: data } = await fetchDashboard();
+    render();
+  } catch (err) {
+    console.error(err);
+    board.innerHTML = `<p style="color:red">Erro ao carregar dashboard</p>`;
+  }
+}
 
-        stocks = data.map(item => ({
-          symbol: item.symbol,
-          price: item.last_price ?? item.close_price ?? item.open_price ?? 0,
-          variation: item.variation ?? 0,
-          open: item.open_price ?? 0,
-          close: item.close_price ?? 0,
-          monitor: true
-        }));
-
-        render();
-      } catch (err) {
-        console.error(err);
-        board.innerHTML = '<p style="color:red">Erro ao carregar dashboard</p>';
-      }
-    }
 
     async function refreshPrices() {
       try {
@@ -234,23 +267,26 @@
             </div>
           </div>
 
-          <div class="price">R$ ${s.price.toFixed(2)}</div>
+<div class="price">R$ ${formatPrice(s.close_price)}</div>
 
-          <div class="variation ${s.variation >= 0 ? 'up' : 'down'}">
-            ${s.variation >= 0 ? '+' : ''}${s.variation}%
-          </div>
+<div class="variation ${typeof s.variation === 'number' && s.variation >= 0 ? 'up' : 'down'}">
+  ${formatVariation(s.variation)}
+</div>
 
-          <div class="details">
-            <div class="details-row">
-              <span class="label">Abertura</span>
-              <span>R$ ${s.open.toFixed(2)}</span>
-            </div>
-            <div class="details-row">
-              <span class="label">Fechamento</span>
-              <span>R$ ${s.close.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
+<div class="details-row">
+  <span class="label">Abertura</span>
+  <span>R$ ${formatPrice(s.open)}</span>
+</div>
+
+<div class="details-row">
+  <span class="label">Máxima</span>
+  <span>R$ ${formatPrice(s.high)}</span>
+</div>
+
+<div class="details-row">
+  <span class="label">Mínima</span>
+  <span>R$ ${formatPrice(s.low)}</span>
+</div>
       `).join('');
     }
 
@@ -258,6 +294,33 @@
       stocks[i].monitor = !stocks[i].monitor;
       render();
     }
+
+    async function toggleMonitor(index) {
+  const stock = stocks[index];
+  const newValue = !stock.monitor;
+
+  try {
+    await fetch(`${API_BASE_URL}/monitor`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': window.USER_ID
+      },
+      body: JSON.stringify({
+        symbol: stock.symbol,
+        monitor: newValue
+      })
+    });
+
+    stock.monitor = newValue;
+    render();
+
+  } catch (err) {
+    console.error('Erro ao salvar monitoramento', err);
+    alert('Erro ao salvar monitoramento');
+  }
+}
+
 
     loadDashboard();
     setInterval(refreshPrices, 60_000);
