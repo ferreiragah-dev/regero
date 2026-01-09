@@ -19,7 +19,6 @@ router.get('/dashboard', async (req, res) => {
     .from('stocks')
     .select(`
       symbol,
-      name,
       price,
       variation,
       open,
