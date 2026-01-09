@@ -1,3 +1,12 @@
+import { Router } from 'express';
+import { supabase } from '../supabase.js';
+
+const router = Router();
+
+/**
+ * GET /api/dashboard
+ * Retorna ações monitoradas pelo usuário
+ */
 router.get('/dashboard', async (req, res) => {
   const userId = req.headers['x-user-id'];
 
@@ -15,16 +24,29 @@ router.get('/dashboard', async (req, res) => {
       open,
       high,
       low,
-      user_stocks!left(user_id)
+      user_stocks (
+        user_id
+      )
     `)
     .eq('user_stocks.user_id', userId);
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+    console.error('Dashboard error:', error);
+    return res.status(500).json({ error: error.message });
+  }
 
   const result = data.map(stock => ({
-    ...stock,
-    monitor: stock.user_stocks.length > 0
+    symbol: stock.symbol,
+    name: stock.name,
+    price: stock.price,
+    variation: stock.variation,
+    open: stock.open,
+    high: stock.high,
+    low: stock.low,
+    monitor: Array.isArray(stock.user_stocks) && stock.user_stocks.length > 0
   }));
 
   res.json(result);
 });
+
+export default router;
