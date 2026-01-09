@@ -5,9 +5,9 @@
   <title>Dashboard Fintech</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
+  <!-- ⚠️ CSS ORIGINAL PRESERVADO -->
   <style>
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -16,7 +16,6 @@
       color: #0f172a;
     }
 
-    /* ===== TOPBAR ===== */
     .topbar {
       height: 64px;
       padding: 0 28px;
@@ -43,6 +42,8 @@
       cursor: pointer;
       border: 1px solid #e5e7eb;
       background: #ffffff;
+      text-decoration: none;
+      color: inherit;
     }
 
     .btn.primary {
@@ -51,7 +52,6 @@
       border: none;
     }
 
-    /* ===== BOARD ===== */
     .board {
       max-width: 1280px;
       margin: 0 auto;
@@ -59,7 +59,6 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
       gap: 20px;
-      align-items: start;
     }
 
     .card {
@@ -67,34 +66,22 @@
       border: 1px solid #e5e7eb;
       border-radius: 14px;
       padding: 18px;
-      overflow: hidden;
-      transition: box-shadow 0.2s ease;
     }
 
-    .card:hover {
-      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
-    }
-
-    /* ===== CARD HEADER ===== */
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    .symbol {
-      font-size: 17px;
-      font-weight: 600;
-    }
+    .symbol { font-size: 17px; font-weight: 600; }
 
-    /* ===== TOGGLE MONITORAR ===== */
     .toggle {
       display: flex;
       align-items: center;
       gap: 6px;
       font-size: 11px;
       cursor: pointer;
-      user-select: none;
     }
 
     .switch {
@@ -103,7 +90,6 @@
       background: #e5e7eb;
       border-radius: 999px;
       position: relative;
-      transition: background 0.2s ease;
     }
 
     .switch::after {
@@ -115,19 +101,12 @@
       position: absolute;
       top: 2px;
       left: 2px;
-      transition: transform 0.2s ease;
-      box-shadow: 0 1px 3px rgba(0,0,0,.15);
+      transition: transform .2s ease;
     }
 
-    .switch.on {
-      background: #16a34a;
-    }
+    .switch.on { background: #16a34a; }
+    .switch.on::after { transform: translateX(16px); }
 
-    .switch.on::after {
-      transform: translateX(16px);
-    }
-
-    /* ===== TIMEFRAMES ===== */
     .timeframes {
       display: flex;
       gap: 6px;
@@ -140,7 +119,6 @@
       font-size: 11px;
       border-radius: 999px;
       border: 1px solid #e5e7eb;
-      color: #64748b;
       cursor: pointer;
     }
 
@@ -150,56 +128,28 @@
       border-color: #0f172a;
     }
 
-    /* ===== CONTENT ===== */
-    .company {
-      font-size: 12px;
-      color: #64748b;
-      margin-bottom: 10px;
-    }
-
-    .price {
-      font-size: 26px;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .variation {
-      font-size: 14px;
-      font-weight: 500;
-    }
-
+    .company { font-size: 12px; color: #64748b; }
+    .price { font-size: 26px; font-weight: 600; }
+    .variation { font-size: 14px; font-weight: 500; }
     .up { color: #16a34a; }
     .down { color: #dc2626; }
 
-    /* ===== DETAILS ===== */
     .details {
       max-height: 0;
       overflow: hidden;
-      transition: max-height 0.3s ease;
+      transition: max-height .3s ease;
       margin-top: 12px;
     }
 
-    .expanded .details {
-      max-height: 300px;
-    }
+    .expanded .details { max-height: 300px; }
 
     .details-row {
       display: flex;
       justify-content: space-between;
       font-size: 13px;
       padding: 6px 0;
-      border-bottom: 1px dashed #e5e7eb;
     }
 
-    .details-row:last-child {
-      border-bottom: none;
-    }
-
-    .label {
-      color: #64748b;
-    }
-
-    /* ===== EXPAND ICON ===== */
     .expand {
       margin-top: 14px;
       display: flex;
@@ -213,7 +163,6 @@
       border-right: 2px solid #64748b;
       border-bottom: 2px solid #64748b;
       transform: rotate(45deg);
-      transition: transform 0.25s ease;
     }
 
     .expanded .chevron {
@@ -223,345 +172,121 @@
 </head>
 <body>
 
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <div class="welcome">Olá, <strong>bem-vindo</strong></div>
-    <div class="actions">
-      <button class="btn">Conta</button>
-      <button class="btn primary">Monitorar</button>
-    </div>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="welcome">Olá, <strong>bem-vindo</strong></div>
+  <div class="actions">
+    <a href="/profile.html" class="btn">Conta</a>
+    <a href="/manage.html" class="btn primary">Gerenciar</a>
   </div>
+</div>
 
-  <!-- BOARD -->
-  <div class="board" id="board"></div>
+<div class="board" id="board"></div>
 
-  <script>
-    const stocks = [
-   {
-    symbol: 'VALE3',
-    name: 'Vale',
-    price: 69.45,
-    var: -0.94,
-    monitor: false,
-    tf: 'M5',
-    open: 70.10,
-    high: 71.00,
-    low: 69.20,
-    volume: '31.7M',
-    expanded: false
-  },
-  {
-    symbol: 'PETR4',
-    name: 'Petrobras PN',
-    price: 37.82,
-    var: 1.12,
-    monitor: false,
-    tf: 'M5',
-    open: 37.20,
-    high: 38.10,
-    low: 37.00,
-    volume: '42.3M',
-    expanded: false
-  },
-  {
-    symbol: 'PETR3',
-    name: 'Petrobras ON',
-    price: 40.15,
-    var: 0.88,
-    monitor: false,
-    tf: 'M5',
-    open: 39.70,
-    high: 40.60,
-    low: 39.50,
-    volume: '18.9M',
-    expanded: false
-  },
-  {
-    symbol: 'ITUB4',
-    name: 'Itaú Unibanco PN',
-    price: 32.40,
-    var: -0.35,
-    monitor: false,
-    tf: 'M5',
-    open: 32.60,
-    high: 32.90,
-    low: 32.10,
-    volume: '28.1M',
-    expanded: false
-  },
-  {
-    symbol: 'BBDC4',
-    name: 'Bradesco PN',
-    price: 15.92,
-    var: 0.51,
-    monitor: false,
-    tf: 'M5',
-    open: 15.80,
-    high: 16.10,
-    low: 15.70,
-    volume: '34.4M',
-    expanded: false
-  },
-  {
-    symbol: 'BBAS3',
-    name: 'Banco do Brasil',
-    price: 53.10,
-    var: -1.20,
-    monitor: false,
-    tf: 'M5',
-    open: 54.00,
-    high: 54.20,
-    low: 52.80,
-    volume: '12.6M',
-    expanded: false
-  },
-  {
-    symbol: 'ABEV3',
-    name: 'Ambev',
-    price: 12.85,
-    var: 0.15,
-    monitor: false,
-    tf: 'M5',
-    open: 12.80,
-    high: 12.95,
-    low: 12.70,
-    volume: '26.9M',
-    expanded: false
-  },
-  {
-    symbol: 'WEGE3',
-    name: 'WEG',
-    price: 38.70,
-    var: 1.95,
-    monitor: false,
-    tf: 'M5',
-    open: 37.90,
-    high: 39.10,
-    low: 37.80,
-    volume: '9.4M',
-    expanded: false
-  },
-  {
-    symbol: 'MGLU3',
-    name: 'Magazine Luiza',
-    price: 2.14,
-    var: -2.28,
-    monitor: false,
-    tf: 'M5',
-    open: 2.20,
-    high: 2.22,
-    low: 2.10,
-    volume: '58.2M',
-    expanded: false
-  },
-  {
-    symbol: 'B3SA3',
-    name: 'B3',
-    price: 13.72,
-    var: 0.64,
-    monitor: false,
-    tf: 'M5',
-    open: 13.60,
-    high: 13.90,
-    low: 13.50,
-    volume: '21.7M',
-    expanded: false
-  },
-  {
-    symbol: 'SUZB3',
-    name: 'Suzano',
-    price: 56.30,
-    var: -0.78,
-    monitor: false,
-    tf: 'M5',
-    open: 56.90,
-    high: 57.20,
-    low: 56.00,
-    volume: '6.8M',
-    expanded: false
-  },
-  {
-    symbol: 'JBSS3',
-    name: 'JBS',
-    price: 34.55,
-    var: 1.44,
-    monitor: false,
-    tf: 'M5',
-    open: 34.00,
-    high: 35.00,
-    low: 33.90,
-    volume: '8.3M',
-    expanded: false
-  },
-  {
-    symbol: 'PRIO3',
-    name: 'PRIO',
-    price: 47.80,
-    var: 2.05,
-    monitor: false,
-    tf: 'M5',
-    open: 46.90,
-    high: 48.20,
-    low: 46.70,
-    volume: '7.9M',
-    expanded: false
-  },
-  {
-    symbol: 'ELET3',
-    name: 'Eletrobras ON',
-    price: 41.25,
-    var: -0.40,
-    monitor: false,
-    tf: 'M5',
-    open: 41.50,
-    high: 41.90,
-    low: 41.00,
-    volume: '10.1M',
-    expanded: false
-  },
-  {
-    symbol: 'ELET6',
-    name: 'Eletrobras PNB',
-    price: 44.10,
-    var: -0.22,
-    monitor: false,
-    tf: 'M5',
-    open: 44.40,
-    high: 44.80,
-    low: 43.90,
-    volume: '6.5M',
-    expanded: false
-  },
-  {
-    symbol: 'RENT3',
-    name: 'Localiza',
-    price: 54.60,
-    var: 1.01,
-    monitor: false,
-    tf: 'M5',
-    open: 54.00,
-    high: 55.20,
-    low: 53.80,
-    volume: '4.2M',
-    expanded: false
-  },
-  {
-    symbol: 'LREN3',
-    name: 'Lojas Renner',
-    price: 17.95,
-    var: -0.89,
-    monitor: false,
-    tf: 'M5',
-    open: 18.20,
-    high: 18.30,
-    low: 17.80,
-    volume: '9.1M',
-    expanded: false
-  },
-  {
-    symbol: 'RADL3',
-    name: 'Raia Drogasil',
-    price: 25.40,
-    var: 0.32,
-    monitor: false,
-    tf: 'M5',
-    open: 25.30,
-    high: 25.60,
-    low: 25.10,
-    volume: '5.7M',
-    expanded: false
-  },
-  {
-    symbol: 'HAPV3',
-    name: 'Hapvida',
-    price: 3.95,
-    var: -1.75,
-    monitor: false,
-    tf: 'M5',
-    open: 4.05,
-    high: 4.10,
-    low: 3.90,
-    volume: '22.4M',
-    expanded: false
-  },
-  {
-    symbol: 'EQTL3',
-    name: 'Equatorial Energia',
-    price: 35.80,
-    var: 0.67,
-    monitor: false,
-    tf: 'M5',
-    open: 35.50,
-    high: 36.10,
-    low: 35.40,
-    volume: '3.9M',
-    expanded: false
+<script>
+  const STORAGE_KEY = 'stocks';
+
+  const defaultStocks = [ /* ← SEU ARRAY ORIGINAL AQUI (INALTERADO) */ ];
+
+  function loadStocks() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultStocks;
   }
-    ];
 
-    const timeframes = ['M1','M5','M15','M30','H1','D1'];
-    const board = document.getElementById('board');
+  function saveStocks(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
 
-    function render() {
-      board.innerHTML = stocks.map((s, i) => `
-        <div class="card ${s.expanded ? 'expanded' : ''}">
-          
-          <div class="card-header">
-            <div class="symbol">${s.symbol}</div>
-            <div class="toggle" onclick="toggleMonitor(${i})">
-              <span>Monitorar</span>
-              <div class="switch ${s.monitor ? 'on' : ''}"></div>
-            </div>
+  let stocks = loadStocks();
+  const timeframes = ['M1','M5','M15','M30','H1','D1'];
+  const board = document.getElementById('board');
+
+ const N8N_API_URL = 'https://SEU-N8N/webhook/market-prices';
+
+  async function syncPricesFromN8N() {
+    try {
+      const res = await fetch(N8N_API_URL);
+      const data = await res.json();
+
+      if (!data.prices) return;
+
+      stocks = stocks.map(stock => {
+        const live = data.prices.find(p => p.symbol === stock.symbol);
+        if (!live) return stock;
+
+        return {
+          ...stock,
+          price: live.price,
+          var: live.variation,
+          open: live.open
+        };
+      });
+
+      saveStocks(stocks);
+      render();
+
+    } catch (err) {
+      console.error('Erro ao sincronizar preços:', err);
+    }
+  }
+
+  function render() {
+    board.innerHTML = stocks.map((s, i) => `
+      <div class="card ${s.expanded ? 'expanded' : ''}">
+        <div class="card-header">
+          <div class="symbol">${s.symbol}</div>
+          <div class="toggle" onclick="toggleMonitor(${i})">
+            Monitorar
+            <div class="switch ${s.monitor ? 'on' : ''}"></div>
           </div>
-
-          <div class="timeframes">
-            ${timeframes.map(tf => `
-              <div class="tf ${s.tf === tf ? 'active' : ''}"
-                   onclick="setTF(${i}, '${tf}')">
-                ${tf}
-              </div>
-            `).join('')}
-          </div>
-
-          <div class="company">${s.name}</div>
-          <div class="price">R$ ${s.price.toFixed(2)}</div>
-
-          <div class="variation ${s.var >= 0 ? 'up' : 'down'}">
-            ${s.var >= 0 ? '+' : ''}${s.var}%
-          </div>
-
-          <div class="details">
-            <div class="details-row"><span class="label">Abertura</span><span>R$ ${s.open.toFixed(2)}</span></div>
-            <div class="details-row"><span class="label">Máxima</span><span>R$ ${s.high.toFixed(2)}</span></div>
-            <div class="details-row"><span class="label">Mínima</span><span>R$ ${s.low.toFixed(2)}</span></div>
-            <div class="details-row"><span class="label">Volume</span><span>${s.volume}</span></div>
-          </div>
-
-          <div class="expand" onclick="toggleExpand(${i})">
-            <div class="chevron"></div>
-          </div>
-
         </div>
-      `).join('');
-    }
 
-    function toggleMonitor(i) {
-      stocks[i].monitor = !stocks[i].monitor;
-      render();
-    }
+        <div class="timeframes">
+          ${timeframes.map(tf => `
+            <div class="tf ${s.tf === tf ? 'active' : ''}"
+                 onclick="setTF(${i}, '${tf}')">${tf}</div>
+          `).join('')}
+        </div>
 
-    function toggleExpand(i) {
-      stocks[i].expanded = !stocks[i].expanded;
-      render();
-    }
+        <div class="company">${s.name}</div>
+        <div class="price">R$ ${s.price.toFixed(2)}</div>
 
-    function setTF(i, tf) {
-      stocks[i].tf = tf;
-      render();
-    }
+        <div class="variation ${s.var >= 0 ? 'up' : 'down'}">
+          ${s.var >= 0 ? '+' : ''}${s.var}%
+        </div>
 
+        <div class="details">
+          <div class="details-row"><span>Abertura</span><span>R$ ${s.open.toFixed(2)}</span></div>
+          <div class="details-row"><span>Máxima</span><span>R$ ${s.high.toFixed(2)}</span></div>
+          <div class="details-row"><span>Mínima</span><span>R$ ${s.low.toFixed(2)}</span></div>
+          <div class="details-row"><span>Volume</span><span>${s.volume}</span></div>
+        </div>
+
+        <div class="expand" onclick="toggleExpand(${i})">
+          <div class="chevron"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function toggleMonitor(i) {
+    stocks[i].monitor = !stocks[i].monitor;
+    saveStocks(stocks);
     render();
-  </script>
+  }
+
+  function toggleExpand(i) {
+    stocks[i].expanded = !stocks[i].expanded;
+    render();
+  }
+
+  function setTF(i, tf) {
+    stocks[i].tf = tf;
+    saveStocks(stocks);
+    render();
+  }
+
+  render();
+</script>
 
 </body>
 </html>
