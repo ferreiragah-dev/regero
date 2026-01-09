@@ -2,62 +2,19 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Dashboard Fintech</title>
+  <title>Dashboard | Regero</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
+  <link rel="stylesheet" href="styles.css" />
+
   <style>
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-                   Roboto, Helvetica, Arial, sans-serif;
-      background: #ffffff;
-      color: #0f172a;
-    }
-
-    /* ===== TOPBAR ===== */
-    .topbar {
-      height: 64px;
-      padding: 0 28px;
-      border-bottom: 1px solid #e5e7eb;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .welcome {
-      font-size: 16px;
-      font-weight: 500;
-    }
-
-    .actions {
-      display: flex;
-      gap: 12px;
-    }
-
-    .btn {
-      padding: 8px 16px;
-      border-radius: 10px;
-      font-size: 14px;
-      cursor: pointer;
-      border: 1px solid #e5e7eb;
-      background: #ffffff;
-    }
-
-    .btn.primary {
-      background: #2563eb;
-      color: #ffffff;
-      border: none;
-    }
-
     /* ===== BOARD ===== */
     .board {
       max-width: 1280px;
       margin: 0 auto;
       padding: 32px 24px;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 20px;
       align-items: start;
     }
@@ -87,7 +44,7 @@
       font-weight: 600;
     }
 
-    /* ===== TOGGLE MONITORAR ===== */
+    /* ===== TOGGLE ===== */
     .toggle {
       display: flex;
       align-items: center;
@@ -103,7 +60,6 @@
       background: #e5e7eb;
       border-radius: 999px;
       position: relative;
-      transition: background 0.2s ease;
     }
 
     .switch::after {
@@ -180,7 +136,7 @@
     }
 
     .expanded .details {
-      max-height: 300px;
+      max-height: 280px;
     }
 
     .details-row {
@@ -191,15 +147,11 @@
       border-bottom: 1px dashed #e5e7eb;
     }
 
-    .details-row:last-child {
-      border-bottom: none;
-    }
-
     .label {
       color: #64748b;
     }
 
-    /* ===== EXPAND ICON ===== */
+    /* ===== EXPAND ===== */
     .expand {
       margin-top: 14px;
       display: flex;
@@ -223,111 +175,96 @@
 </head>
 <body>
 
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <div class="welcome">Olá, <strong>bem-vindo</strong></div>
-    <div class="actions">
-      <button class="btn">Conta</button>
-      <button class="btn primary">Monitorar</button>
-    </div>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div>
+    Olá, <strong id="username">bem-vindo</strong>
   </div>
+  <div class="nav">
+    <a href="dashboard.html" class="active">Dashboard</a>
+    <a href="manage.html">Gerenciar</a>
+    <a href="profile.html">Perfil</a>
+  </div>
+</div>
 
-  <!-- BOARD -->
-  <div class="board" id="board"></div>
+<!-- BOARD -->
+<div class="board" id="board"></div>
 
-  <script>
-    const stocks = [
-      {
-        symbol: 'PETR4',
-        name: 'Petrobras PN',
-        price: 36.12,
-        var: 1.82,
-        monitor: true,
-        tf: 'M15',
-        open: 35.40,
-        high: 36.80,
-        low: 35.10,
-        volume: '42.3M',
-        expanded: false
-      },
-      {
-        symbol: 'VALE3',
-        name: 'Vale',
-        price: 69.45,
-        var: -0.94,
-        monitor: false,
-        tf: 'M5',
-        open: 70.10,
-        high: 71.00,
-        low: 69.20,
-        volume: '31.7M',
-        expanded: false
-      }
-    ];
+<script src="app.js"></script>
+<script>
+  const user = getUser();
+  document.getElementById('username').innerText = user.name;
 
-    const timeframes = ['M1','M5','M15','M30','H1','D1'];
-    const board = document.getElementById('board');
+  let stocks = getStocks().map(s => ({
+    ...s,
+    tf: s.tf || 'M15',
+    expanded: false,
+    price: 0,
+    var: 0
+  }));
 
-    function render() {
-      board.innerHTML = stocks.map((s, i) => `
-        <div class="card ${s.expanded ? 'expanded' : ''}">
-          
-          <div class="card-header">
-            <div class="symbol">${s.symbol}</div>
-            <div class="toggle" onclick="toggleMonitor(${i})">
-              <span>Monitorar</span>
-              <div class="switch ${s.monitor ? 'on' : ''}"></div>
-            </div>
+  const timeframes = ['M1','M5','M15','M30','H1','D1'];
+  const board = document.getElementById('board');
+
+  function render() {
+    board.innerHTML = stocks.map((s, i) => `
+      <div class="card ${s.expanded ? 'expanded' : ''}">
+        
+        <div class="card-header">
+          <div class="symbol">${s.symbol}</div>
+          <div class="toggle" onclick="toggleMonitor(${i})">
+            <span>Monitorar</span>
+            <div class="switch ${s.monitor ? 'on' : ''}"></div>
           </div>
-
-          <div class="timeframes">
-            ${timeframes.map(tf => `
-              <div class="tf ${s.tf === tf ? 'active' : ''}"
-                   onclick="setTF(${i}, '${tf}')">
-                ${tf}
-              </div>
-            `).join('')}
-          </div>
-
-          <div class="company">${s.name}</div>
-          <div class="price">R$ ${s.price.toFixed(2)}</div>
-
-          <div class="variation ${s.var >= 0 ? 'up' : 'down'}">
-            ${s.var >= 0 ? '+' : ''}${s.var}%
-          </div>
-
-          <div class="details">
-            <div class="details-row"><span class="label">Abertura</span><span>R$ ${s.open.toFixed(2)}</span></div>
-            <div class="details-row"><span class="label">Máxima</span><span>R$ ${s.high.toFixed(2)}</span></div>
-            <div class="details-row"><span class="label">Mínima</span><span>R$ ${s.low.toFixed(2)}</span></div>
-            <div class="details-row"><span class="label">Volume</span><span>${s.volume}</span></div>
-          </div>
-
-          <div class="expand" onclick="toggleExpand(${i})">
-            <div class="chevron"></div>
-          </div>
-
         </div>
-      `).join('');
-    }
 
-    function toggleMonitor(i) {
-      stocks[i].monitor = !stocks[i].monitor;
-      render();
-    }
+        <div class="timeframes">
+          ${timeframes.map(tf => `
+            <div class="tf ${s.tf === tf ? 'active' : ''}"
+                 onclick="setTF(${i}, '${tf}')">${tf}</div>
+          `).join('')}
+        </div>
 
-    function toggleExpand(i) {
-      stocks[i].expanded = !stocks[i].expanded;
-      render();
-    }
+        <div class="company">Ação monitorada</div>
 
-    function setTF(i, tf) {
-      stocks[i].tf = tf;
-      render();
-    }
+        <div class="price">R$ ${s.price.toFixed(2)}</div>
 
+        <div class="variation ${s.var >= 0 ? 'up' : 'down'}">
+          ${s.var >= 0 ? '+' : ''}${s.var}%
+        </div>
+
+        <div class="details">
+          <div class="details-row"><span class="label">Timeframe</span><span>${s.tf}</span></div>
+          <div class="details-row"><span class="label">Monitoramento</span><span>${s.monitor ? 'Ativo' : 'Inativo'}</span></div>
+          <div class="details-row"><span class="label">Origem</span><span>Regero</span></div>
+        </div>
+
+        <div class="expand" onclick="toggleExpand(${i})">
+          <div class="chevron"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function toggleMonitor(i) {
+    stocks[i].monitor = !stocks[i].monitor;
+    saveStocks(stocks);
     render();
-  </script>
+  }
+
+  function toggleExpand(i) {
+    stocks[i].expanded = !stocks[i].expanded;
+    render();
+  }
+
+  function setTF(i, tf) {
+    stocks[i].tf = tf;
+    saveStocks(stocks);
+    render();
+  }
+
+  render();
+</script>
 
 </body>
 </html>

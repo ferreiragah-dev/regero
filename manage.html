@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gerenciar Ações</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="topbar">
+  <strong>Gerenciar Ações</strong>
+  <div class="nav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="profile.html">Perfil</a>
+  </div>
+</div>
+
+<div class="container" id="list"></div>
+
+<script src="app.js"></script>
+<script>
+  const list = document.getElementById('list');
+  let stocks = getStocks();
+
+  function render() {
+    list.innerHTML = stocks.map((s, i) => `
+      <div class="card">
+        <strong>${s.symbol}</strong>
+        <div style="margin-top:10px">
+          <label>
+            <input type="checkbox"
+                   ${s.monitor ? 'checked' : ''}
+                   onchange="toggle(${i})">
+            Monitorar
+          </label>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function toggle(i) {
+    stocks[i].monitor = !stocks[i].monitor;
+    saveStocks(stocks);
+  }
+
+  render();
+</script>
+
+</body>
+</html>
