@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Gerenciar Ações</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <title>Gerenciar</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
@@ -20,25 +20,23 @@
 <script src="app.js"></script>
 <script>
   const list = document.getElementById('list');
-  let stocks = getStocks();
 
   function render() {
+    const stocks = getStocks();
     list.innerHTML = stocks.map((s, i) => `
       <div class="card">
-        <strong>${s.symbol}</strong>
-        <div style="margin-top:10px">
-          <label>
-            <input type="checkbox"
-                   ${s.monitor ? 'checked' : ''}
-                   onchange="toggle(${i})">
-            Monitorar
-          </label>
-        </div>
+        <strong>${s.symbol}</strong><br><br>
+        <label>
+          <input type="checkbox" ${s.monitor?'checked':''}
+                 onchange="toggle(${i})">
+          Monitorar
+        </label>
       </div>
     `).join('');
   }
 
   function toggle(i) {
+    const stocks = getStocks();
     stocks[i].monitor = !stocks[i].monitor;
     saveStocks(stocks);
   }

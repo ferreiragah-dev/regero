@@ -1,27 +1,40 @@
-const STORAGE = {
-  user: 'user_profile',
-  stocks: 'stocks_data'
-};
+const STORAGE_KEY = 'regero_state';
 
-function getUser() {
-  return JSON.parse(localStorage.getItem(STORAGE.user)) || {
-    name: 'Gabriel',
-    email: 'gabriel@email.com'
+function getState() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+    user: {
+      name: 'Gabriel',
+      email: 'gabriel@email.com'
+    },
+    stocks: [
+      { symbol: 'PETR4', monitor: true, tf: 'M15' },
+      { symbol: 'VALE3', monitor: false, tf: 'M15' }
+    ]
   };
 }
 
-function saveUser(data) {
-  localStorage.setItem(STORAGE.user, JSON.stringify(data));
+function saveState(state) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+/* USER */
+function getUser() {
+  return getState().user;
+}
+
+function saveUser(user) {
+  const state = getState();
+  state.user = user;
+  saveState(state);
+}
+
+/* STOCKS */
 function getStocks() {
-  return JSON.parse(localStorage.getItem(STORAGE.stocks)) || [
-    { symbol: 'PETR4', monitor: true },
-    { symbol: 'VALE3', monitor: false },
-    { symbol: 'ITUB4', monitor: true }
-  ];
+  return getState().stocks;
 }
 
-function saveStocks(data) {
-  localStorage.setItem(STORAGE.stocks, JSON.stringify(data));
+function saveStocks(stocks) {
+  const state = getState();
+  state.stocks = stocks;
+  saveState(state);
 }
