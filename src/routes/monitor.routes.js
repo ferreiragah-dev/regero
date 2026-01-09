@@ -1,3 +1,8 @@
+import express from 'express';
+import { supabase } from '../services/supabase.js';
+
+const router = express.Router();
+
 router.post('/monitor', async (req, res) => {
   const userId = req.headers['x-user-id'];
   const { symbol, monitor } = req.body;
@@ -8,7 +13,6 @@ router.post('/monitor', async (req, res) => {
 
   try {
     if (monitor === true) {
-      // INSERT somente se não existir
       const { error } = await supabase
         .from('user_stocks')
         .upsert(
@@ -18,7 +22,6 @@ router.post('/monitor', async (req, res) => {
 
       if (error) throw error;
     } else {
-      // DELETE quando monitor = false
       const { error } = await supabase
         .from('user_stocks')
         .delete()
@@ -34,3 +37,5 @@ router.post('/monitor', async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
+export default router; // 👈 OBRIGATÓRIO
