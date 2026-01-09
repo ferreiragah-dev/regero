@@ -1,63 +1,29 @@
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
 
-import { router } from './routes.js';
-import { updateStockState } from './jobs.js';
-
-dotenv.config();
+import dashboardRoutes from './routes/dashboard.routes.js';
+import authMiddleware from './middlewares/auth.middleware.js';
+import protectedRoutes from './routes/index.js'; // se existir
 
 const app = express();
 
-/* ===============================
-   MIDDLEWARES
-================================ */
-app.use(cors({ origin: '*' }));
+app.use(cors());
 app.use(express.json());
 
-/* ===============================
-   ROOT HEALTHCHECK (OBRIGATÓRIO)
-   EasyPanel testa GET /
-================================ */
-app.get('/', (req, res) => {
-  res.status(200).send('OK');
-});
+// 🔓 ROTA PÚBLICA
+app.use('/api/dashboard', dashboardRoutes);
 
-/* ===============================
-   HEALTH EXPLÍCITO (opcional)
-================================ */
-app.get('/health', (req, res) => {
-  res.status(200).send('OK');
-});
-
-/* ===============================
-   API ROUTES
-================================ */
-app.use('/api', router);
-
-/* ===============================
-   SERVER
-================================ */
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
-/* ===============================
-   SAFE BACKGROUND JOB
-   (NUNCA derruba o processo)
-================================ */
-async function safeJob() {
-  try {
-    await updateStockState();
-  } catch (err) {
-    console.error('[JOB ERROR]', err?.message || err);
-  }
+// 🔒 ROTAS PROTEGIDAS (se existirem)
+if (protectedRoutes) {
+  app.use('/api', authMiddleware, protectedRoutes);
 }
 
-// primeira execução
-safeJob();
+// Healthcheck (EasyPanel)
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 
-// loop a cada 1 minuto
-setInterval(safeJob, 60_000);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

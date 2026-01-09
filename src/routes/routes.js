@@ -1,6 +1,6 @@
 import express from 'express';
-import { supabase } from './db.js';
-import { authMiddleware } from './auth.js';
+import { supabase } from '../db.js';
+import { authMiddleware } from '../auth.js';
 
 export const router = express.Router();
 
