@@ -8,27 +8,33 @@
   <link rel="stylesheet" href="/styles.css" />
 
   <style>
+    /* ===== LAYOUT ===== */
     .board {
       max-width: 1200px;
       margin: 32px auto;
       padding: 0 24px;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 24px;
     }
 
     .card {
       background: #ffffff;
       border: 1px solid #e5e7eb;
       border-radius: 16px;
-      padding: 18px;
+      padding: 20px;
+      transition: box-shadow .2s ease;
     }
 
+    .card:hover {
+      box-shadow: 0 12px 32px rgba(15,23,42,.08);
+    }
+
+    /* ===== HEADER ===== */
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 14px;
     }
 
     .symbol {
@@ -36,28 +42,112 @@
       font-weight: 600;
     }
 
-    .monitor {
+    .company {
       font-size: 13px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    /* ===== TOGGLE ===== */
+    .toggle {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .switch {
+      width: 40px;
+      height: 22px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .switch::after {
+      content: '';
+      width: 18px;
+      height: 18px;
+      background: #ffffff;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: transform .2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+
+    .switch.on {
+      background: #16a34a;
+    }
+
+    .switch.on::after {
+      transform: translateX(18px);
+    }
+
+    /* ===== PRICE ===== */
+    .price {
+      margin-top: 18px;
+      font-size: 28px;
+      font-weight: 600;
+    }
+
+    .variation {
+      margin-top: 6px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .up { color: #16a34a; }
+    .down { color: #dc2626; }
+
+    /* ===== EXPAND ===== */
+    .expand {
+      margin-top: 18px;
+      display: flex;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .chevron {
+      width: 18px;
+      height: 18px;
+      border-right: 2px solid #64748b;
+      border-bottom: 2px solid #64748b;
+      transform: rotate(45deg);
+      transition: transform .25s ease;
+    }
+
+    .expanded .chevron {
+      transform: rotate(-135deg);
+    }
+
+    /* ===== DETAILS ===== */
+    .details {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+      display: none;
+    }
+
+    .expanded .details {
+      display: block;
     }
 
     .timeframes {
       display: flex;
-      gap: 6px;
-      margin-bottom: 14px;
+      gap: 8px;
       flex-wrap: wrap;
+      margin-bottom: 12px;
     }
 
     .tf {
-      padding: 5px 10px;
+      padding: 6px 10px;
       font-size: 11px;
       border-radius: 999px;
       border: 1px solid #e5e7eb;
       cursor: pointer;
-      color: #334155;
-      background: #ffffff;
     }
 
     .tf.active {
@@ -65,91 +155,102 @@
       color: #ffffff;
       border-color: #0f172a;
     }
-
-    .status {
-      font-size: 12px;
-      color: #64748b;
-      line-height: 1.5;
-    }
   </style>
 </head>
 <body>
 
+<!-- TOPBAR -->
 <div class="topbar">
-  <div>Olá, <strong id="username"></strong></div>
+  <div>Olá, <strong id="username">bem-vindo</strong></div>
   <div class="nav">
-    <a href="/dashboard.html">Dashboard</a>
-    <a href="/manage.html">Gerenciar</a>
-    <a href="/profile.html">Perfil</a>
+    <button class="btn">Conta</button>
+    <button class="btn primary">Monitorar</button>
   </div>
 </div>
 
+<!-- BOARD -->
 <div class="board" id="board"></div>
 
 <script src="/app.js"></script>
 <script>
   const user = getUser();
-  document.getElementById('username').innerText = user.name || 'Usuário';
+  document.getElementById('username').innerText = user.name || 'bem-vindo';
 
-  const timeframes = ['M1','M5','M15','M30','H1','D1'];
   const board = document.getElementById('board');
+  const timeframes = ['M1','M5','M15','M30','H1','D1'];
 
-  function normalizeStocks(rawStocks) {
-    return rawStocks.map(s => ({
+  function normalizeStocks(raw) {
+    return raw.map(s => ({
       symbol: s.symbol,
+      name: s.name || '',
       monitor: !!s.monitor,
-      tf: s.tf || 'M15'
+      tf: s.tf || 'M15',
+      price: s.price || (s.symbol === 'PETR4' ? 36.12 : 69.45),
+      var: s.var ?? (s.symbol === 'PETR4' ? 1.82 : -0.94),
+      expanded: false
     }));
   }
 
   let stocks = normalizeStocks(getStocks());
 
-  function renderDashboard() {
+  function render() {
     board.innerHTML = stocks.map((s, i) => `
-      <div class="card">
-
+      <div class="card ${s.expanded ? 'expanded' : ''}">
+        
         <div class="card-header">
-          <div class="symbol">${s.symbol}</div>
+          <div>
+            <div class="symbol">${s.symbol}</div>
+            <div class="company">${s.name}</div>
+          </div>
 
-          <label class="monitor">
-            <input type="checkbox"
-                   ${s.monitor ? 'checked' : ''}
-                   onchange="toggleMonitor(${i})">
+          <div class="toggle">
             Monitorar
-          </label>
+            <div class="switch ${s.monitor ? 'on' : ''}"
+                 onclick="toggleMonitor(${i})"></div>
+          </div>
         </div>
 
-        <div class="timeframes">
-          ${timeframes.map(tf => `
-            <div class="tf ${s.tf === tf ? 'active' : ''}"
-                 onclick="setTimeframe(${i}, '${tf}')">
-              ${tf}
-            </div>
-          `).join('')}
+        <div class="price">R$ ${s.price.toFixed(2)}</div>
+
+        <div class="variation ${s.var >= 0 ? 'up' : 'down'}">
+          ${s.var >= 0 ? '+' : ''}${s.var}%
         </div>
 
-        <div class="status">
-          Timeframe ativo: <strong>${s.tf}</strong><br>
-          Status: <strong>${s.monitor ? 'Monitorando' : 'Desativado'}</strong>
+        <div class="expand" onclick="toggleExpand(${i})">
+          <div class="chevron"></div>
+        </div>
+
+        <div class="details">
+          <div class="timeframes">
+            ${timeframes.map(tf => `
+              <div class="tf ${s.tf === tf ? 'active' : ''}"
+                   onclick="setTF(${i}, '${tf}')">${tf}</div>
+            `).join('')}
+          </div>
         </div>
 
       </div>
     `).join('');
   }
 
-  function toggleMonitor(index) {
-    stocks[index].monitor = !stocks[index].monitor;
+  function toggleMonitor(i) {
+    stocks[i].monitor = !stocks[i].monitor;
     saveStocks(stocks);
-    renderDashboard();
+    render();
   }
 
-  function setTimeframe(index, tf) {
-    stocks[index].tf = tf;
-    saveStocks(stocks);
-    renderDashboard();
+  function toggleExpand(i) {
+    stocks[i].expanded = !stocks[i].expanded;
+    render();
   }
 
-  renderDashboard();
+  function setTF(i, tf) {
+    stocks[i].tf = tf;
+    saveStocks(stocks);
+    render();
+  }
+
+  render();
 </script>
 
 </body>
