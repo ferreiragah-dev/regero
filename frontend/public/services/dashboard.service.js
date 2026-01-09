@@ -1,10 +1,11 @@
-import { fetchDashboard } from '../api/dashboard.api.js';
+const API_URL = 'https://stock-tracker-fintech-backend.watryz.easypanel.host';
 
 export async function loadDashboard() {
-  const data = await fetchDashboard();
+  const res = await fetch(`${API_URL}/api/dashboard`);
 
-  return {
-    stocks: Array.isArray(data.stocks) ? data.stocks : [],
-    updatedAt: data.updatedAt
-  };
+  if (!res.ok) {
+    throw new Error('Erro ao buscar dashboard');
+  }
+
+  return res.json();
 }

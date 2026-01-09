@@ -1,5 +1,5 @@
 import { initDashboard } from './pages/dashboard.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-  initDashboard();
-});
+document
+  .getElementById('btn-dashboard')
+  .addEventListener('click', initDashboard);
