@@ -5,9 +5,10 @@
   <title>Dashboard Fintech</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <!-- ⚠️ CSS ORIGINAL PRESERVADO -->
+  <!-- ===== CSS BASE (OFICIAL) ===== -->
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -25,15 +26,9 @@
       justify-content: space-between;
     }
 
-    .welcome {
-      font-size: 16px;
-      font-weight: 500;
-    }
+    .welcome { font-size: 16px; font-weight: 500; }
 
-    .actions {
-      display: flex;
-      gap: 12px;
-    }
+    .actions { display: flex; gap: 12px; }
 
     .btn {
       padding: 8px 16px;
@@ -66,6 +61,11 @@
       border: 1px solid #e5e7eb;
       border-radius: 14px;
       padding: 18px;
+      transition: box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
     }
 
     .card-header {
@@ -82,6 +82,7 @@
       gap: 6px;
       font-size: 11px;
       cursor: pointer;
+      user-select: none;
     }
 
     .switch {
@@ -101,7 +102,7 @@
       position: absolute;
       top: 2px;
       left: 2px;
-      transition: transform .2s ease;
+      transition: transform 0.2s ease;
     }
 
     .switch.on { background: #16a34a; }
@@ -120,6 +121,7 @@
       border-radius: 999px;
       border: 1px solid #e5e7eb;
       cursor: pointer;
+      color: #64748b;
     }
 
     .tf.active {
@@ -131,13 +133,14 @@
     .company { font-size: 12px; color: #64748b; }
     .price { font-size: 26px; font-weight: 600; }
     .variation { font-size: 14px; font-weight: 500; }
+
     .up { color: #16a34a; }
     .down { color: #dc2626; }
 
     .details {
       max-height: 0;
       overflow: hidden;
-      transition: max-height .3s ease;
+      transition: max-height 0.3s ease;
       margin-top: 12px;
     }
 
@@ -181,111 +184,141 @@
   </div>
 </div>
 
+<!-- BOARD -->
 <div class="board" id="board"></div>
 
 <script>
-  const STORAGE_KEY = 'stocks';
+/* =========================================================
+   CONFIG
+========================================================= */
+const N8N_URL = 'https://n8n.lowcodeforward.com/webhook-test/fedfc91d-20f2-4215-b1ab-476c67e2d315';
+const STORAGE_KEY = 'stocks';
 
-  const defaultStocks = [ /* ← SEU ARRAY ORIGINAL AQUI (INALTERADO) */ ];
+/* =========================================================
+   FALLBACK (caso n8n fique off)
+========================================================= */
+const defaultStocks = [
+  { symbol:'PETR4', name:'Petrobras PN', price:0, var:0, open:0, high:0, low:0, volume:'-', tf:'M5', monitor:false, expanded:false },
+  { symbol:'VALE3', name:'Vale',          price:0, var:0, open:0, high:0, low:0, volume:'-', tf:'M5', monitor:false, expanded:false },
+  { symbol:'ITUB4', name:'Itaú PN',        price:0, var:0, open:0, high:0, low:0, volume:'-', tf:'M5', monitor:false, expanded:false }
+];
 
-  function loadStocks() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultStocks;
-  }
+/* =========================================================
+   STATE
+========================================================= */
+function loadStocks() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultStocks;
+}
 
-  function saveStocks(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }
+function saveStocks(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
 
-  let stocks = loadStocks();
-  const timeframes = ['M1','M5','M15','M30','H1','D1'];
-  const board = document.getElementById('board');
+let stocks = loadStocks();
+const timeframes = ['M1','M5','M15','M30','H1','D1'];
+const board = document.getElementById('board');
 
- const N8N_API_URL = 'https://SEU-N8N/webhook/market-prices';
-
-  async function syncPricesFromN8N() {
-    try {
-      const res = await fetch(N8N_API_URL);
-      const data = await res.json();
-
-      if (!data.prices) return;
-
-      stocks = stocks.map(stock => {
-        const live = data.prices.find(p => p.symbol === stock.symbol);
-        if (!live) return stock;
-
-        return {
-          ...stock,
-          price: live.price,
-          var: live.variation,
-          open: live.open
-        };
-      });
-
-      saveStocks(stocks);
-      render();
-
-    } catch (err) {
-      console.error('Erro ao sincronizar preços:', err);
-    }
-  }
-
-  function render() {
-    board.innerHTML = stocks.map((s, i) => `
-      <div class="card ${s.expanded ? 'expanded' : ''}">
-        <div class="card-header">
-          <div class="symbol">${s.symbol}</div>
-          <div class="toggle" onclick="toggleMonitor(${i})">
-            Monitorar
-            <div class="switch ${s.monitor ? 'on' : ''}"></div>
-          </div>
-        </div>
-
-        <div class="timeframes">
-          ${timeframes.map(tf => `
-            <div class="tf ${s.tf === tf ? 'active' : ''}"
-                 onclick="setTF(${i}, '${tf}')">${tf}</div>
-          `).join('')}
-        </div>
-
-        <div class="company">${s.name}</div>
-        <div class="price">R$ ${s.price.toFixed(2)}</div>
-
-        <div class="variation ${s.var >= 0 ? 'up' : 'down'}">
-          ${s.var >= 0 ? '+' : ''}${s.var}%
-        </div>
-
-        <div class="details">
-          <div class="details-row"><span>Abertura</span><span>R$ ${s.open.toFixed(2)}</span></div>
-          <div class="details-row"><span>Máxima</span><span>R$ ${s.high.toFixed(2)}</span></div>
-          <div class="details-row"><span>Mínima</span><span>R$ ${s.low.toFixed(2)}</span></div>
-          <div class="details-row"><span>Volume</span><span>${s.volume}</span></div>
-        </div>
-
-        <div class="expand" onclick="toggleExpand(${i})">
-          <div class="chevron"></div>
+/* =========================================================
+   RENDER
+========================================================= */
+function render() {
+  board.innerHTML = stocks.map((s, i) => `
+    <div class="card ${s.expanded ? 'expanded' : ''}">
+      <div class="card-header">
+        <div class="symbol">${s.symbol}</div>
+        <div class="toggle" onclick="toggleMonitor(${i})">
+          Monitorar
+          <div class="switch ${s.monitor ? 'on' : ''}"></div>
         </div>
       </div>
-    `).join('');
-  }
 
-  function toggleMonitor(i) {
-    stocks[i].monitor = !stocks[i].monitor;
-    saveStocks(stocks);
-    render();
-  }
+      <div class="timeframes">
+        ${timeframes.map(tf => `
+          <div class="tf ${s.tf === tf ? 'active' : ''}"
+               onclick="setTF(${i}, '${tf}')">${tf}</div>
+        `).join('')}
+      </div>
 
-  function toggleExpand(i) {
-    stocks[i].expanded = !stocks[i].expanded;
-    render();
-  }
+      <div class="company">${s.name}</div>
+      <div class="price">R$ ${s.price.toFixed(2)}</div>
 
-  function setTF(i, tf) {
-    stocks[i].tf = tf;
-    saveStocks(stocks);
-    render();
-  }
+      <div class="variation ${s.var >= 0 ? 'up' : 'down'}">
+        ${s.var >= 0 ? '+' : ''}${s.var}%
+      </div>
 
+      <div class="details">
+        <div class="details-row"><span>Abertura</span><span>R$ ${s.open.toFixed(2)}</span></div>
+        <div class="details-row"><span>Máxima</span><span>R$ ${s.high.toFixed(2)}</span></div>
+        <div class="details-row"><span>Mínima</span><span>R$ ${s.low.toFixed(2)}</span></div>
+        <div class="details-row"><span>Volume</span><span>${s.volume}</span></div>
+      </div>
+
+      <div class="expand" onclick="toggleExpand(${i})">
+        <div class="chevron"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+function toggleMonitor(i) {
+  stocks[i].monitor = !stocks[i].monitor;
+  saveStocks(stocks);
   render();
+}
+
+function toggleExpand(i) {
+  stocks[i].expanded = !stocks[i].expanded;
+  render();
+}
+
+function setTF(i, tf) {
+  stocks[i].tf = tf;
+  saveStocks(stocks);
+  render();
+}
+
+/* =========================================================
+   SYNC WITH N8N
+========================================================= */
+async function syncFromN8N() {
+  try {
+    const res = await fetch(N8N_URL);
+    const data = await res.json();
+
+    if (!Array.isArray(data.prices)) return;
+
+    stocks = stocks.map(stock => {
+      const live = data.prices.find(p => p.symbol === stock.symbol);
+      if (!live) return stock;
+
+      return {
+        ...stock,
+        price: live.price,
+        var: live.variation,
+        open: live.open,
+        high: live.high,
+        low: live.low,
+        volume: live.volume
+      };
+    });
+
+    saveStocks(stocks);
+    render();
+
+  } catch (err) {
+    console.error('Erro ao sincronizar n8n:', err);
+  }
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+render();
+syncFromN8N();
+setInterval(syncFromN8N, 60_000);
 </script>
 
 </body>
