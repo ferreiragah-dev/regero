@@ -2,45 +2,211 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Gerenciar Ações</title>
+  <title>Dashboard | Regero</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
   <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    .board {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .symbol {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .switch {
+      width: 36px;
+      height: 20px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      position: relative;
+    }
+
+    .switch::after {
+      content: '';
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+    }
+
+    .switch.on {
+      background: #16a34a;
+    }
+
+    .switch.on::after {
+      transform: translateX(16px);
+    }
+
+    .timeframes {
+      display: flex;
+      gap: 6px;
+      margin: 10px 0;
+      flex-wrap: wrap;
+    }
+
+    .tf {
+      padding: 4px 8px;
+      font-size: 11px;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      color: #64748b;
+      cursor: pointer;
+    }
+
+    .tf.active {
+      background: #0f172a;
+      color: #fff;
+      border-color: #0f172a;
+    }
+
+    .price {
+      font-size: 24px;
+      font-weight: 600;
+      margin: 10px 0 4px;
+    }
+
+    .variation {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .up { color: #16a34a; }
+    .down { color: #dc2626; }
+
+    .details {
+      display: none;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+
+    .expanded .details {
+      display: block;
+    }
+
+    .expand {
+      margin-top: 10px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 12px;
+      color: #64748b;
+    }
+  </style>
 </head>
 <body>
 
 <div class="topbar">
-  <strong>Gerenciar Ações</strong>
+  <div>Olá, <strong id="username">bem-vindo</strong></div>
   <div class="nav">
-    <a href="dashboard.html">Dashboard</a>
+    <a href="dashboard.html" class="active">Dashboard</a>
+    <a href="manage.html">Gerenciar</a>
     <a href="profile.html">Perfil</a>
   </div>
 </div>
 
-<div class="container" id="list"></div>
+<div class="board" id="board"></div>
 
 <script src="app.js"></script>
 <script>
-  const list = document.getElementById('list');
-  let stocks = getStocks();
+  const user = getUser();
+  document.getElementById('username').innerText = user.name || 'usuário';
+
+  const timeframes = ['M1','M5','M15','M30','H1','D1'];
+  const board = document.getElementById('board');
+
+  // NORMALIZAÇÃO SEGURA
+  let stocks = getStocks().map(s => ({
+    symbol: s.symbol,
+    monitor: !!s.monitor,
+    tf: s.tf || 'M15',
+    price: typeof s.price === 'number' ? s.price : 0,
+    var: typeof s.var === 'number' ? s.var : 0,
+    expanded: false
+  }));
 
   function render() {
-    list.innerHTML = stocks.map((s, i) => `
-      <div class="card">
-        <strong>${s.symbol}</strong>
-        <div style="margin-top:10px">
-          <label>
-            <input type="checkbox"
-                   ${s.monitor ? 'checked' : ''}
-                   onchange="toggle(${i})">
-            Monitorar
-          </label>
+    board.innerHTML = stocks.map((s, i) => `
+      <div class="card ${s.expanded ? 'expanded' : ''}">
+        <div class="card-header">
+          <div class="symbol">${s.symbol}</div>
+          <div class="toggle" onclick="toggleMonitor(${i})">
+            <span>Monitorar</span>
+            <div class="switch ${s.monitor ? 'on' : ''}"></div>
+          </div>
+        </div>
+
+        <div class="timeframes">
+          ${timeframes.map(tf => `
+            <div class="tf ${s.tf === tf ? 'active' : ''}"
+                 onclick="setTF(${i}, '${tf}')">${tf}</div>
+          `).join('')}
+        </div>
+
+        <div class="price">R$ ${(s.price || 0).toFixed(2)}</div>
+
+        <div class="variation ${s.var >= 0 ? 'up' : 'down'}">
+          ${s.var >= 0 ? '+' : ''}${s.var}%
+        </div>
+
+        <div class="details">
+          <div>Timeframe: ${s.tf}</div>
+          <div>Monitoramento: ${s.monitor ? 'Ativo' : 'Inativo'}</div>
+        </div>
+
+        <div class="expand" onclick="toggleExpand(${i})">
+          ${s.expanded ? 'Recolher ▲' : 'Expandir ▼'}
         </div>
       </div>
     `).join('');
   }
 
-  function toggle(i) {
+  function toggleMonitor(i) {
     stocks[i].monitor = !stocks[i].monitor;
     saveStocks(stocks);
+    render();
+  }
+
+  function toggleExpand(i) {
+    stocks[i].expanded = !stocks[i].expanded;
+    render();
+  }
+
+  function setTF(i, tf) {
+    stocks[i].tf = tf;
+    saveStocks(stocks);
+    render();
   }
 
   render();
