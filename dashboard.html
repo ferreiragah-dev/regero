@@ -358,9 +358,13 @@
     stocks[i].tf = tf;
     render();
   }
-
+  // primeira carga ao abrir a página
   carregarDados();
-  setInterval(carregarDados, 30000);
+
+  // atualização automática a cada 1 minuto (60.000 ms)
+  setInterval(() => {
+    carregarDados();
+  }, 60000);
 </script>
 
 
