@@ -2,47 +2,38 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Gerenciar</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Stock Tracker</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<div class="topbar">
-  <strong>Gerenciar Ações</strong>
-  <div class="nav">
+<header class="header">
+  <h1>Stock Tracker</h1>
+  <nav>
     <a href="dashboard.html">Dashboard</a>
     <a href="profile.html">Perfil</a>
+    <a href="#" onclick="logout()">Sair</a>
+  </nav>
+</header>
+
+<main class="container">
+  <h2>Olá, bem-vindo 👋</h2>
+
+  <div class="cards">
+    <div class="card">
+      <h3>Dashboard</h3>
+      <p>Visualize suas ações monitoradas</p>
+      <a href="dashboard.html">Acessar</a>
+    </div>
+
+    <div class="card">
+      <h3>Perfil</h3>
+      <p>Gerencie sua conta</p>
+      <a href="profile.html">Gerenciar</a>
+    </div>
   </div>
-</div>
+</main>
 
-<div class="container" id="list"></div>
-
-<script src="app.js"></script>
-<script>
-  const list = document.getElementById('list');
-
-  function render() {
-    const stocks = getStocks();
-    list.innerHTML = stocks.map((s, i) => `
-      <div class="card">
-        <strong>${s.symbol}</strong><br><br>
-        <label>
-          <input type="checkbox" ${s.monitor?'checked':''}
-                 onchange="toggle(${i})">
-          Monitorar
-        </label>
-      </div>
-    `).join('');
-  }
-
-  function toggle(i) {
-    const stocks = getStocks();
-    stocks[i].monitor = !stocks[i].monitor;
-    saveStocks(stocks);
-  }
-
-  render();
-</script>
-
+<script src="js/auth.js"></script>
 </body>
 </html>
