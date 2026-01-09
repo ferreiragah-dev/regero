@@ -13,18 +13,29 @@ app.use(express.json());
 
 app.use('/api', router);
 
-// 🔥 HEALTHCHECK (importante para EasyPanel)
+// Healthcheck (EasyPanel)
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
-// 🔥 PORTA DINÂMICA
 const PORT = process.env.PORT || 3000;
 
+// 🔥 START SERVER PRIMEIRO
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// JOB
-updateStockState();
-setInterval(updateStockState, 60_000);
+// 🔒 JOB PROTEGIDO (NUNCA derruba o processo)
+async function safeJob() {
+  try {
+    await updateStockState();
+  } catch (err) {
+    console.error('[JOB ERROR]', err.message);
+  }
+}
+
+// primeira execução (sem await)
+safeJob();
+
+// loop
+setInterval(safeJob, 60_000);
