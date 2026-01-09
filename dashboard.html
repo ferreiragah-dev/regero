@@ -1,110 +1,105 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <title>Dashboard | Regero</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f8fafc;
-      margin: 0;
-    }
-
-    header {
-      background: #ffffff;
-      padding: 16px 24px;
-      border-bottom: 1px solid #e5e7eb;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    nav a {
-      margin-left: 12px;
-      text-decoration: none;
-      color: #0f172a;
-      font-weight: 500;
-    }
-
-    nav a:hover {
-      text-decoration: underline;
-    }
-
-    .board {
-      padding: 24px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 16px;
-    }
-
-    .card {
-      background: #ffffff;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 16px;
-    }
-
-    .price {
-      font-size: 22px;
-      font-weight: bold;
-      margin: 8px 0;
-    }
-
-    .up { color: #16a34a; }
-    .down { color: #dc2626; }
-  </style>
+  <!-- CSS ABSOLUTO -->
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 
-<header>
-  <strong>Olá, <span id="username">usuário</span></strong>
-
-  <!-- NAVEGAÇÃO FUNCIONAL -->
-  <nav>
-    <a href="/dashboard.html">Dashboard</a>
-    <a href="/manage.html">Gerenciar</a>
-    <a href="/profile.html">Perfil</a>
-  </nav>
-</header>
+<div class="topbar">
+  <div>Olá, <strong id="username">bem-vindo</strong></div>
+  <div class="nav">
+    <button class="btn">Conta</button>
+    <button class="btn primary">Monitorar</button>
+  </div>
+</div>
 
 <div class="board" id="board"></div>
 
+<script src="/app.js"></script>
 <script>
-  /* ===== USER ===== */
-  function getUser() {
-    return JSON.parse(localStorage.getItem('user')) || {
-      name: 'Gabriel'
-    };
-  }
-
-  document.getElementById('username').innerText = getUser().name;
-
-  /* ===== STOCKS ===== */
-  function getStocks() {
-    return JSON.parse(localStorage.getItem('stocks')) || [
-      { symbol: 'PETR4', price: 36.12, var: 1.82 },
-      { symbol: 'VALE3', price: 69.45, var: -0.94 }
-    ];
-  }
+  const user = getUser();
+  document.getElementById('username').innerText = user.name || 'bem-vindo';
 
   const board = document.getElementById('board');
-  const stocks = getStocks();
+  const timeframes = ['M1','M5','M15','M30','H1','D1'];
 
-  board.innerHTML = stocks.map(s => `
-    <div class="card">
-      <strong>${s.symbol}</strong>
+  function normalize(raw) {
+    return raw.map(s => ({
+      symbol: s.symbol,
+      name: s.name || '',
+      monitor: !!s.monitor,
+      tf: s.tf || 'M15',
+      price: s.price || (s.symbol === 'PETR4' ? 36.12 : 69.45),
+      var: s.var ?? (s.symbol === 'PETR4' ? 1.82 : -0.94),
+      expanded: false
+    }));
+  }
 
-      <div class="price">
-        R$ ${s.price.toFixed(2)}
+  let stocks = normalize(getStocks());
+
+  function render() {
+    board.innerHTML = stocks.map((s, i) => `
+      <div class="card ${s.expanded ? 'expanded' : ''}">
+
+        <div class="card-header">
+          <div>
+            <div class="symbol">${s.symbol}</div>
+            <div class="company">${s.name}</div>
+          </div>
+
+          <div class="toggle">
+            Monitorar
+            <div class="switch ${s.monitor ? 'on' : ''}"
+                 onclick="toggleMonitor(${i})"></div>
+          </div>
+        </div>
+
+        <div class="price">R$ ${s.price.toFixed(2)}</div>
+
+        <div class="variation ${s.var >= 0 ? 'up' : 'down'}">
+          ${s.var >= 0 ? '+' : ''}${s.var}%
+        </div>
+
+        <div class="expand" onclick="toggleExpand(${i})">
+          <div class="chevron"></div>
+        </div>
+
+        <div class="details">
+          <div class="timeframes">
+            ${timeframes.map(tf => `
+              <div class="tf ${s.tf === tf ? 'active' : ''}"
+                   onclick="setTF(${i}, '${tf}')">${tf}</div>
+            `).join('')}
+          </div>
+        </div>
+
       </div>
+    `).join('');
+  }
 
-      <div class="${s.var >= 0 ? 'up' : 'down'}">
-        ${s.var >= 0 ? '+' : ''}${s.var}%
-      </div>
-    </div>
-  `).join('');
+  function toggleMonitor(i) {
+    stocks[i].monitor = !stocks[i].monitor;
+    saveStocks(stocks);
+    render();
+  }
+
+  function toggleExpand(i) {
+    stocks[i].expanded = !stocks[i].expanded;
+    render();
+  }
+
+  function setTF(i, tf) {
+    stocks[i].tf = tf;
+    saveStocks(stocks);
+    render();
+  }
+
+  render();
 </script>
 
 </body>
