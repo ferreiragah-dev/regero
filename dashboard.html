@@ -22,7 +22,6 @@
       border-bottom: 1px solid #e5e7eb;
       display: flex;
       align-items: center;
-      justify-content: space-between;
     }
 
     .board {
@@ -39,11 +38,6 @@
       border: 1px solid #e5e7eb;
       border-radius: 14px;
       padding: 18px;
-      transition: box-shadow 0.2s ease;
-    }
-
-    .card:hover {
-      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
     }
 
     .card-header {
@@ -85,13 +79,8 @@
       transition: transform 0.2s ease;
     }
 
-    .switch.on {
-      background: #16a34a;
-    }
-
-    .switch.on::after {
-      transform: translateX(16px);
-    }
+    .switch.on { background: #16a34a; }
+    .switch.on::after { transform: translateX(16px); }
 
     .company {
       font-size: 12px;
@@ -120,7 +109,7 @@
     }
 
     .expanded .details {
-      max-height: 500px;
+      max-height: 600px; /* apenas para caber o gráfico */
     }
 
     .details-row {
@@ -155,148 +144,136 @@
 
 <body>
 
-  <div class="topbar">
-    <strong>Dashboard Fintech</strong>
-  </div>
+<div class="topbar"><strong>Dashboard Fintech</strong></div>
+<div class="board" id="board"></div>
 
-  <div class="board" id="board"></div>
+<script>
+const N8N_URL = 'https://n8n.lowcodeforward.com/webhook/stocks';
+const board = document.getElementById('board');
+let stocks = [];
 
-  <script>
-    const N8N_URL = 'https://n8n.lowcodeforward.com/webhook/stocks';
-    const board = document.getElementById('board');
-    let stocks = [];
+async function carregarDados() {
+  const res = await fetch(N8N_URL);
+  const data = await res.json();
 
-    const STOCK_NAMES = {
-      VALE3:'Vale', PETR4:'Petrobras PN', PETR3:'Petrobras ON',
-      ITUB4:'Itaú PN', ITUB3:'Itaú ON', B3SA3:'B3',
-      ABEV3:'Ambev', BBDC4:'Bradesco PN', BBDC3:'Bradesco ON',
-      BBAS3:'Banco do Brasil', BBSE3:'BB Seguridade',
-      WEGE3:'WEG', RADL3:'Raia Drogasil', MRFG3:'Marfrig',
-      CPFE3:'CPFL Energia', EGIE3:'Engie Brasil', COGN3:'Cogna',
-      UGPA3:'Ultrapar', CVCB3:'CVC', YDUQ3:'Yduqs'
+  stocks = data.map(item => {
+    const existing = stocks.find(s => s.symbol === item.symbol);
+
+    const price = item.last_price ?? item.close_price ?? 0;
+    const open = item.open_price ?? price;
+
+    let history = existing?.history || [];
+
+    // adiciona histórico apenas se monitorado OU se ainda não existir
+    if (existing?.monitor || history.length === 0) {
+      history.push({ time: Date.now(), price });
+      if (history.length > 30) history.shift();
+    }
+
+    if (existing && !existing.monitor) return existing;
+
+    const variation = open
+      ? (((price - open) / open) * 100).toFixed(2)
+      : 0;
+
+    return {
+      symbol: item.symbol,
+      name: item.symbol,
+      price,
+      open,
+      var: Number(variation),
+      high: price * 1.01,
+      low: price * 0.99,
+      volume: '—',
+      monitor: existing?.monitor || false,
+      expanded: existing?.expanded || false,
+      history
     };
+  });
 
-    async function carregarDados() {
-      try {
-        const res = await fetch(N8N_URL);
-        const data = await res.json();
+  render();
+}
 
-        stocks = data.map(item => {
-          const existing = stocks.find(s => s.symbol === item.symbol);
-          if (existing && !existing.monitor) return existing;
-
-          const price = item.last_price ?? item.close_price ?? 0;
-          const open = item.open_price ?? 0;
-          const variation = open ? (((price - open) / open) * 100).toFixed(2) : 0;
-
-          const history = existing?.history || [];
-          if (existing?.monitor) {
-            history.push({ time: new Date().toLocaleTimeString(), price });
-            if (history.length > 30) history.shift();
-          }
-
-          return {
-            symbol: item.symbol,
-            name: STOCK_NAMES[item.symbol] || item.symbol,
-            price,
-            var: Number(variation),
-            open,
-            high: price * 1.01,
-            low: price * 0.99,
-            volume: '—',
-            monitor: existing?.monitor || false,
-            expanded: existing?.expanded || false,
-            history
-          };
-        });
-
-        render();
-      } catch (e) {
-        console.error('Erro ao carregar dados', e);
-      }
-    }
-
-    function render() {
-      board.innerHTML = stocks.map((s, i) => `
-        <div class="card ${s.expanded ? 'expanded' : ''}">
-          <div class="card-header">
-            <div class="symbol">${s.symbol}</div>
-            <div class="toggle" onclick="toggleMonitor(${i})">
-              <span>Monitorar</span>
-              <div class="switch ${s.monitor ? 'on' : ''}"></div>
-            </div>
-          </div>
-
-          <div class="company">${s.name}</div>
-          <div class="price">R$ ${s.price.toFixed(2)}</div>
-
-          <div class="variation ${s.var >= 0 ? 'up' : 'down'}">
-            ${s.var >= 0 ? '+' : ''}${s.var}%
-          </div>
-
-          <div class="details">
-            <div class="details-row"><span>Abertura</span><span>R$ ${s.open.toFixed(2)}</span></div>
-            <div class="details-row"><span>Máxima</span><span>R$ ${s.high.toFixed(2)}</span></div>
-            <div class="details-row"><span>Mínima</span><span>R$ ${s.low.toFixed(2)}</span></div>
-            <div class="details-row"><span>Volume</span><span>${s.volume}</span></div>
-
-            <div style="margin-top:12px">
-              <canvas id="chart-${i}" width="220" height="80"></canvas>
-            </div>
-          </div>
-
-          <div class="expand" onclick="toggleExpand(${i})">
-            <div class="chevron"></div>
-          </div>
+function render() {
+  board.innerHTML = stocks.map((s, i) => `
+    <div class="card ${s.expanded ? 'expanded' : ''}">
+      <div class="card-header">
+        <div class="symbol">${s.symbol}</div>
+        <div class="toggle" onclick="toggleMonitor(${i})">
+          <span>Monitorar</span>
+          <div class="switch ${s.monitor ? 'on' : ''}"></div>
         </div>
-      `).join('');
-    }
+      </div>
 
-    function toggleMonitor(i) {
-      stocks[i].monitor = !stocks[i].monitor;
-      render();
-    }
+      <div class="company">${s.name}</div>
+      <div class="price">R$ ${s.price.toFixed(2)}</div>
 
-    function toggleExpand(i) {
-      stocks[i].expanded = !stocks[i].expanded;
-      render();
-      if (stocks[i].expanded) {
-        setTimeout(() => drawChart(`chart-${i}`, stocks[i].history), 50);
-      }
-    }
+      <div class="variation ${s.var >= 0 ? 'up' : 'down'}">
+        ${s.var >= 0 ? '+' : ''}${s.var}%
+      </div>
 
-    function drawChart(id, history) {
-      if (!history || history.length < 2) return;
-      const c = document.getElementById(id);
-      if (!c) return;
+      <div class="details">
+        <div class="details-row"><span>Abertura</span><span>R$ ${s.open.toFixed(2)}</span></div>
+        <div class="details-row"><span>Máxima</span><span>R$ ${s.high.toFixed(2)}</span></div>
+        <div class="details-row"><span>Mínima</span><span>R$ ${s.low.toFixed(2)}</span></div>
+        <div class="details-row"><span>Volume</span><span>${s.volume}</span></div>
 
-      const ctx = c.getContext('2d');
-      ctx.clearRect(0, 0, c.width, c.height);
+        <!-- 👇 ÚNICA ADIÇÃO: GRÁFICO -->
+        <canvas id="chart-${i}" width="220" height="80" style="margin-top:12px"></canvas>
+      </div>
 
-      const prices = history.map(h => h.price);
-      const min = Math.min(...prices);
-      const max = Math.max(...prices);
+      <div class="expand" onclick="toggleExpand(${i})">
+        <div class="chevron"></div>
+      </div>
+    </div>
+  `).join('');
 
-      const pad = 6;
-      const sx = (c.width - pad * 2) / (prices.length - 1);
-      const sy = (c.height - pad * 2) / (max - min || 1);
+  stocks.forEach((s, i) => {
+    if (s.expanded) drawChart(`chart-${i}`, s.history);
+  });
+}
 
-      ctx.beginPath();
-      ctx.strokeStyle = '#2563eb';
-      ctx.lineWidth = 2;
+function toggleMonitor(i) {
+  stocks[i].monitor = !stocks[i].monitor;
+  render();
+}
 
-      prices.forEach((p, i) => {
-        const x = pad + i * sx;
-        const y = c.height - pad - (p - min) * sy;
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      });
+function toggleExpand(i) {
+  stocks[i].expanded = !stocks[i].expanded;
+  render();
+}
 
-      ctx.stroke();
-    }
+function drawChart(id, history) {
+  const c = document.getElementById(id);
+  if (!c || !history || history.length === 0) return;
 
-    carregarDados();
-    setInterval(carregarDados, 60000);
-  </script>
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, c.width, c.height);
+
+  const prices = history.map(h => h.price);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+
+  const pad = 6;
+  const sx = (c.width - pad * 2) / Math.max(prices.length - 1, 1);
+  const sy = (c.height - pad * 2) / (max - min || 1);
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#2563eb';
+  ctx.lineWidth = 2;
+
+  prices.forEach((p, i) => {
+    const x = pad + i * sx;
+    const y = c.height - pad - (p - min) * sy;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+
+  ctx.stroke();
+}
+
+carregarDados();
+setInterval(carregarDados, 60000);
+</script>
 
 </body>
 </html>
