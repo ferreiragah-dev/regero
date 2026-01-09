@@ -1,35 +1,36 @@
-import express from 'express';
-import { supabase } from '../services/supabase.js';
-
-const router = express.Router();
-
 router.post('/monitor', async (req, res) => {
   const userId = req.headers['x-user-id'];
   const { symbol, monitor } = req.body;
 
-  if (!userId) {
-    return res.status(401).json({ error: 'User not authenticated' });
+  if (!userId || !symbol || typeof monitor !== 'boolean') {
+    return res.status(400).json({ error: 'Invalid input' });
   }
 
-  if (!symbol) {
-    return res.status(400).json({ error: 'Symbol is required' });
+  try {
+    if (monitor === true) {
+      // INSERT somente se não existir
+      const { error } = await supabase
+        .from('user_stocks')
+        .upsert(
+          { user_id: userId, symbol },
+          { onConflict: 'user_id,symbol' }
+        );
+
+      if (error) throw error;
+    } else {
+      // DELETE quando monitor = false
+      const { error } = await supabase
+        .from('user_stocks')
+        .delete()
+        .eq('user_id', userId)
+        .eq('symbol', symbol);
+
+      if (error) throw error;
+    }
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
   }
-
-  const { error } = await supabase
-    .from('user_stocks')
-    .upsert({
-      user_id: userId,
-      symbol,
-      monitor
-    });
-
-  if (error) {
-    console.error(error);
-    return res.status(500).json({ error: error.message });
-  }
-
-  res.json({ success: true });
 });
-
-export default router;
-console.log('Monitor routes loaded');
