@@ -216,6 +216,9 @@ async function loadDashboard() {
       name: item.name ?? item.symbol,
       price: typeof item.price === 'number' ? item.price : 0,
       variation: typeof item.variation === 'number' ? item.variation : 0,
+      open: typeof item.open === 'number' ? item.open : 0,
+      high: typeof item.high === 'number' ? item.high : 0,
+      low: typeof item.low === 'number' ? item.low : 0,
       monitor: item.monitor === true
     }));
 
@@ -241,6 +244,9 @@ async function refreshPrices() {
 
       stock.price = typeof update.price === 'number' ? update.price : stock.price;
       stock.variation = typeof update.variation === 'number' ? update.variation : stock.variation;
+      stock.open = typeof update.open === 'number' ? update.open : stock.open;
+      stock.high = typeof update.high === 'number' ? update.high : stock.high;
+      stock.low = typeof update.low === 'number' ? update.low : stock.low;
     });
 
     render();
