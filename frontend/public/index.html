@@ -169,44 +169,31 @@
 <div class="board" id="board"></div>
 
 <script>
-const token = localStorage.getItem('access_token');
+const API_BASE_URL =
+  'https://stock-tracker-fintech-backend.watryz.easypanel.host/api';
 
-  const userId = localStorage.getItem('user_id');
-
-  if (!userId) {
-    console.warn('Usuário não autenticado, redirecionando para login');
-    window.location.href = '/login.html';
-  } else {
-    window.USER_ID = userId;
-  }
-
-  const API_BASE_URL =
-    'https://stock-tracker-fintech-backend.watryz.easypanel.host/api';
-
-  let stocks = [];
-  const board = document.getElementById('board');
-
-  function formatPrice(v) {
-    return typeof v === 'number' ? v.toFixed(2) : '--';
-  }
-
-  function formatVariation(v) {
-    if (typeof v !== 'number') return '--';
-    return `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
-  }
+const board = document.getElementById('board');
+let stocks = [];
 
 function getUserId() {
   return localStorage.getItem('user_id');
 }
 
+const userId = getUserId();
+if (!userId) {
+  window.location.href = '/login.html';
+}
+
+function formatPrice(v) {
+  return typeof v === 'number' ? v.toFixed(2) : '--';
+}
+
+function formatVariation(v) {
+  if (typeof v !== 'number') return '--';
+  return `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
+}
+
 async function fetchDashboard() {
-  const userId = getUserId();
-
-  if (!userId) {
-    window.location.href = '/login.html';
-    return;
-  }
-
   const res = await fetch(`${API_BASE_URL}/dashboard`, {
     headers: {
       'x-user-id': userId
@@ -220,105 +207,108 @@ async function fetchDashboard() {
   return res.json();
 }
 
-  async function loadDashboard() {
-    try {
-      const data = await fetchDashboard();
+async function loadDashboard() {
+  try {
+    const data = await fetchDashboard();
 
-      stocks = data.map(item => ({
-        symbol: item.symbol,
-        name: item.name || item.symbol,
-        price: Number(item.price) || 0,
-        variation: Number(item.variation) || 0,
-        open: Number(item.open) || 0,
-        high: Number(item.high) || 0,
-        low: Number(item.low) || 0,
-        monitor: Boolean(item.monitor)
-      }));
+    stocks = data.map(item => ({
+      symbol: item.symbol,
+      name: item.name ?? item.symbol,
+      price: typeof item.price === 'number' ? item.price : 0,
+      variation: typeof item.variation === 'number' ? item.variation : 0,
+      open: typeof item.open === 'number' ? item.open : 0,
+      high: typeof item.high === 'number' ? item.high : 0,
+      low: typeof item.low === 'number' ? item.low : 0,
+      monitor: item.monitor === true
+    }));
 
-      if (!stocks.length) {
-        board.innerHTML = `<p style="color:#64748b">Nenhuma ação monitorada</p>`;
-        return;
-      }
-
-      render();
-    } catch (err) {
-      console.error(err);
-      board.innerHTML = `<p style="color:red">Erro ao carregar dashboard</p>`;
+    if (!stocks.length) {
+      board.innerHTML = `<p style="color:#64748b">Nenhuma ação monitorada</p>`;
+      return;
     }
+
+    render();
+  } catch (err) {
+    console.error(err);
+    board.innerHTML = `<p style="color:red">Erro ao carregar dashboard</p>`;
   }
-
-  async function refreshPrices() {
-    try {
-      const data = await fetchDashboard();
-
-      data.forEach(update => {
-        const stock = stocks.find(s => s.symbol === update.symbol);
-        if (!stock || !stock.monitor) return;
-
-        stock.price = Number(update.price) || stock.price;
-        stock.variation = Number(update.variation) ?? stock.variation;
-        stock.open = Number(update.open) || stock.open;
-        stock.high = Number(update.high) || stock.high;
-        stock.low = Number(update.low) || stock.low;
-      });
-
-      render();
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  async function toggleMonitor(index) {
-    const stock = stocks[index];
-    const newValue = !stock.monitor;
-
-    try {
-      await fetch(`${API_BASE_URL}/monitor`, {
-        method: 'POST',
-headers: {
-  "Authorization": `Bearer ${localStorage.getItem("access_token")}`
 }
-,
-        body: JSON.stringify({
-          symbol: stock.symbol,
-          monitor: newValue
-        })
-      });
 
-      stock.monitor = newValue;
-      render();
-    } catch (err) {
-      console.error(err);
-      alert('Erro ao salvar monitoramento');
-    }
+async function refreshPrices() {
+  try {
+    const data = await fetchDashboard();
+
+    data.forEach(update => {
+      const stock = stocks.find(s => s.symbol === update.symbol);
+      if (!stock) return;
+
+      stock.price = typeof update.price === 'number' ? update.price : stock.price;
+      stock.variation = typeof update.variation === 'number' ? update.variation : stock.variation;
+      stock.open = typeof update.open === 'number' ? update.open : stock.open;
+      stock.high = typeof update.high === 'number' ? update.high : stock.high;
+      stock.low = typeof update.low === 'number' ? update.low : stock.low;
+    });
+
+    render();
+  } catch (err) {
+    console.error(err);
   }
+}
 
-  function render() {
-    board.innerHTML = stocks.map((s, i) => `
-      <div class="card">
-        <div class="card-header">
-          <div class="symbol">${s.symbol}</div>
-          <div class="toggle" onclick="toggleMonitor('${s.symbol}', ${s.monitor})">
-            <span>Monitorar</span>
-            <div class="switch ${s.monitor ? 'on' : ''}"></div>
-          </div>
-        </div>
+async function toggleMonitor(index) {
+  const stock = stocks[index];
+  const newValue = !stock.monitor;
 
-        <div class="price">R$ ${formatPrice(s.price)}</div>
+  try {
+    await fetch(`${API_BASE_URL}/monitor`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId
+      },
+      body: JSON.stringify({
+        symbol: stock.symbol,
+        monitor: newValue
+      })
+    });
 
-        <div class="variation ${s.variation >= 0 ? 'up' : 'down'}">
-          ${formatVariation(s.variation)}
-        </div>
+    stock.monitor = newValue;
+    render();
+  } catch (err) {
+    console.error(err);
+    alert('Erro ao salvar monitoramento');
+  }
+}
 
-        <div class="details">
-          <div class="details-row"><span class="label">Abertura</span><span>R$ ${formatPrice(s.open)}</span></div>
+function render() {
+  board.innerHTML = stocks.map((s, i) => `
+    <div class="card">
+      <div class="card-header">
+        <div class="symbol">${s.symbol}</div>
+        <div class="toggle" onclick="toggleMonitor(${i})">
+          <span>Monitorar</span>
+          <div class="switch ${s.monitor ? 'on' : ''}"></div>
         </div>
       </div>
-    `).join('');
-  }
 
-  loadDashboard();
-  setInterval(refreshPrices, 60_000);
+      <div class="price">R$ ${formatPrice(s.price)}</div>
+
+      <div class="variation ${s.variation >= 0 ? 'up' : 'down'}">
+        ${formatVariation(s.variation)}
+      </div>
+
+      <div class="details">
+        <div class="details-row">
+          <span class="label">Abertura</span>
+          <span>R$ ${formatPrice(s.open)}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+loadDashboard();
+setInterval(refreshPrices, 60_000);
 </script>
 
 </body>
