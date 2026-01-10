@@ -5,11 +5,14 @@ import './cron/priceUpdater.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import monitorRoutes from './routes/monitor.routes.js'; // 👈 IMPORTANTE
 
+import marketRoutes from './routes/market.routes.js';
+
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
+app.use('/api/market', marketRoutes);
 app.use('/api', dashboardRoutes);
 app.use('/api', monitorRoutes); // 👈 ESSENCIAL
 

@@ -4,37 +4,40 @@ import { supabase } from '../services/supabase.js';
 const router = express.Router();
 
 /**
- * Recebe dados do N8N
- * Segurança simples via header (opcional)
+ * POST /api/market/update
+ * Body: [
+ *   { symbol, price, variation, open, high, low }
+ * ]
  */
-router.post('/market/update', async (req, res) => {
-  const secret = req.headers['x-n8n-secret'];
+router.post('/update', async (req, res) => {
+  try {
+    const updates = req.body;
 
-  if (process.env.N8N_SECRET && secret !== process.env.N8N_SECRET) {
-    return res.status(401).json({ error: 'unauthorized' });
+    if (!Array.isArray(updates)) {
+      return res.status(400).json({ error: 'Body must be an array' });
+    }
+
+    for (const item of updates) {
+      if (!item.symbol) continue;
+
+      await supabase
+        .from('stocks')
+        .update({
+          price: item.price ?? null,
+          variation: item.variation ?? null,
+          open_price: item.open ?? null,
+          high_price: item.high ?? null,
+          low_price: item.low ?? null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('symbol', item.symbol);
+    }
+
+    res.json({ success: true, count: updates.length });
+  } catch (err) {
+    console.error('[MARKET UPDATE ERROR]', err);
+    res.status(500).json({ error: 'Internal error' });
   }
-
-  const stocks = req.body;
-
-  if (!Array.isArray(stocks)) {
-    return res.status(400).json({ error: 'invalid payload' });
-  }
-
-  for (const s of stocks) {
-    await supabase
-      .from('stocks')
-      .upsert({
-        symbol: s.symbol,
-        price: s.price,
-        variation: s.variation,
-        open: s.open,
-        high: s.high,
-        low: s.low,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'symbol' });
-  }
-
-  return res.json({ success: true, count: stocks.length });
 });
 
 export default router;
