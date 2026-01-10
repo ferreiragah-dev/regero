@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../services/supabase.js';
 
+
 const router = express.Router();
 
 router.get('/dashboard', async (req, res) => {
@@ -10,45 +11,29 @@ router.get('/dashboard', async (req, res) => {
     return res.status(401).json({ error: 'User not authenticated' });
   }
 
-  // 1. Buscar símbolos monitorados pelo usuário
-  const { data: monitored, error: monitorError } = await supabase
-    .from('user_stocks')
-    .select('symbol')
-    .eq('user_id', userId);
-
-  if (monitorError) {
-    return res.status(500).json({ error: monitorError.message });
-  }
-
-  if (!monitored || monitored.length === 0) {
-    return res.json([]);
-  }
-
-  const symbols = monitored.map(s => s.symbol);
-
-  // 2. Buscar preços das ações
-  const { data: stocks, error: stockError } = await supabase
+  const { data, error } = await supabase
     .from('stocks')
     .select(`
       symbol,
       open_price,
       close_price,
       last_price,
-      variation
+      variation,
+      user_stocks!left(user_id)
     `)
-    .in('symbol', symbols);
+    .eq('user_stocks.user_id', userId);
 
-  if (stockError) {
-    return res.status(500).json({ error: stockError.message });
+  if (error) {
+    console.error('Dashboard error:', error);
+    return res.status(500).json({ error: error.message });
   }
 
-  // 3. Normalizar resposta (frontend NÃO conhece schema)
-  const result = stocks.map(stock => ({
+  const result = data.map(stock => ({
     symbol: stock.symbol,
-    price: stock.last_price ?? stock.close_price,
-    open: stock.open_price,
-    variation: stock.variation,
-    monitor: true
+    price: stock.last_price ?? stock.close_price ?? 0,
+    open: stock.open_price ?? 0,
+    variation: stock.variation ?? 0,
+    monitor: stock.user_stocks.length > 0
   }));
 
   res.json(result);
