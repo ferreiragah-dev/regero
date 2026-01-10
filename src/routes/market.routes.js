@@ -5,42 +5,46 @@ const router = express.Router();
 
 router.post('/market/update', async (req, res) => {
   try {
-    let payload = req.body;
+    const payload = req.body;
 
-    // 🔥 ACEITA OBJETO OU ARRAY
+    // 🔥 aceita objeto único ou array
     const data = Array.isArray(payload) ? payload : [payload];
 
-    // Validação mínima
+    // validação mínima
     for (const item of data) {
       if (!item.symbol) {
         return res.status(400).json({ error: 'symbol is required' });
       }
     }
 
-    const rows = data.map(item => ({
-      symbol: item.symbol,
-      price: item.price ?? null,
-      variation: item.variation ?? null,
-      open: item.open ?? null,
-      high: item.high ?? null,
-      low: item.low ?? null,
-      volume: item.volume ?? null,
-      updated_at: new Date()
-    }));
+    const results = [];
 
-    const { error } = await supabase
-      .from('stocks')
-      .upsert(rows, { onConflict: 'symbol' });
+    for (const item of data) {
+      const { error } = await supabase
+        .from('stocks')
+        .update({
+          price: item.price ?? null,
+          variation: item.variation ?? null,
+          open: item.open ?? null,
+          high: item.high ?? null,
+          low: item.low ?? null,
+          volume: item.volume ?? null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('symbol', item.symbol);
 
-    if (error) {
-      console.error('[MARKET UPDATE ERROR]', error);
-      return res.status(500).json({ error: error.message });
+      if (error) {
+        console.error('[MARKET UPDATE ERROR]', item.symbol, error);
+        return res.status(500).json({ error: error.message });
+      }
+
+      results.push(item.symbol);
     }
 
     return res.json({
       success: true,
-      updated: rows.length,
-      symbols: rows.map(r => r.symbol)
+      updated: results.length,
+      symbols: results
     });
 
   } catch (err) {
