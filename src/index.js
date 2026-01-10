@@ -1,28 +1,35 @@
 import express from 'express';
 import cors from 'cors';
-import './cron/priceUpdater.js';
-import stocksRoutes from './routes/stocks.routes.js';
-import dashboardRoutes from './routes/dashboard.routes.js';
-import monitorRoutes from './routes/monitor.routes.js'; // 👈 IMPORTANTE
-app.use('/api', stocksRoutes);
-import marketRoutes from './routes/market.routes.js';
 
+import stocksRoutes from './routes/stocks.routes.js';
+import marketRoutes from './routes/market.routes.js';
+import { startPriceUpdater } from './cron/priceUpdater.js';
+
+/* ✅ PRIMEIRO cria o app */
 const app = express();
 
-app.use(cors());
+/* ✅ MIDDLEWARES */
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type']
+}));
+
 app.use(express.json());
 
+/* ✅ ROTAS */
+app.use('/api', stocksRoutes);
 app.use('/api', marketRoutes);
-app.use('/api', dashboardRoutes);
-app.use('/api', monitorRoutes); // 👈 ESSENCIAL
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+/* HEALTH CHECK */
+app.get('/health', (_, res) => {
+  res.send('OK');
 });
 
+/* START SERVER */
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Backend running on port ${PORT}`);
-});
 
-console.log('Index loaded');
+app.listen(PORT, () => {
+  console.log(`🚀 Backend rodando na porta ${PORT}`);
+  startPriceUpdater(); // cron inicia DEPOIS que o app existe
+});
