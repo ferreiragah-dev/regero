@@ -12,7 +12,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/market', marketRoutes);
+app.use('/api', marketRoutes);
 app.use('/api', dashboardRoutes);
 app.use('/api', monitorRoutes); // 👈 ESSENCIAL
 
