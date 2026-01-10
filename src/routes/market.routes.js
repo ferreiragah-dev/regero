@@ -3,40 +3,49 @@ import { supabase } from '../services/supabase.js';
 
 const router = express.Router();
 
-/**
- * POST /api/market/update
- * Body: [
- *   { symbol, price, variation, open, high, low }
- * ]
- */
-router.post('/update', async (req, res) => {
+router.post('/market/update', async (req, res) => {
   try {
-    const updates = req.body;
+    let payload = req.body;
 
-    if (!Array.isArray(updates)) {
-      return res.status(400).json({ error: 'Body must be an array' });
+    // 🔥 ACEITA OBJETO OU ARRAY
+    const data = Array.isArray(payload) ? payload : [payload];
+
+    // Validação mínima
+    for (const item of data) {
+      if (!item.symbol) {
+        return res.status(400).json({ error: 'symbol is required' });
+      }
     }
 
-    for (const item of updates) {
-      if (!item.symbol) continue;
+    const rows = data.map(item => ({
+      symbol: item.symbol,
+      price: item.price ?? null,
+      variation: item.variation ?? null,
+      open: item.open ?? null,
+      high: item.high ?? null,
+      low: item.low ?? null,
+      volume: item.volume ?? null,
+      updated_at: new Date()
+    }));
 
-      await supabase
-        .from('stocks')
-        .update({
-          price: item.price ?? null,
-          variation: item.variation ?? null,
-          open_price: item.open ?? null,
-          high_price: item.high ?? null,
-          low_price: item.low ?? null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('symbol', item.symbol);
+    const { error } = await supabase
+      .from('stocks')
+      .upsert(rows, { onConflict: 'symbol' });
+
+    if (error) {
+      console.error('[MARKET UPDATE ERROR]', error);
+      return res.status(500).json({ error: error.message });
     }
 
-    res.json({ success: true, count: updates.length });
+    return res.json({
+      success: true,
+      updated: rows.length,
+      symbols: rows.map(r => r.symbol)
+    });
+
   } catch (err) {
-    console.error('[MARKET UPDATE ERROR]', err);
-    res.status(500).json({ error: 'Internal error' });
+    console.error('[MARKET UPDATE EXCEPTION]', err);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
