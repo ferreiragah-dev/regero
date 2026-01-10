@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cadastro de Ações</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
+      background: #f8fafc;
+      margin: 0;
+      padding: 32px;
+      color: #0f172a;
+    }
+
+    h1 {
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 500px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.08);
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+    }
+
+    button {
+      margin-top: 16px;
+      padding: 12px;
+      width: 100%;
+      border-radius: 10px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: .9;
+    }
+
+    .list {
+      margin-top: 32px;
+      max-width: 500px;
+    }
+
+    .item {
+      background: #fff;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0,0,0,.05);
+    }
+
+    .symbol {
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+<h1>📈 Cadastro de Ações</h1>
+
+<div class="card">
+  <label>Símbolo</label>
+  <input id="symbol" placeholder="PETR4" />
+
+  <label>Nome</label>
+  <input id="name" placeholder="Petrobras PN" />
+
+  <button onclick="createStock()">Cadastrar</button>
+</div>
+
+<div class="list" id="list"></div>
+
+<script>
+const API_BASE_URL = 'https://stock-tracker-fintech-backend.watryz.easypanel.host/api';
+
+async function loadStocks() {
+  const res = await fetch(`${API_BASE_URL}/stocks`);
+  const data = await res.json();
+
+  const list = document.getElementById('list');
+  list.innerHTML = '<h3>Ações cadastradas</h3>';
+
+  data.forEach(s => {
+    list.innerHTML += `
+      <div class="item">
+        <div class="symbol">${s.symbol}</div>
+        <div>${s.name}</div>
+      </div>
+    `;
+  });
+}
+
+async function createStock() {
+  const symbol = document.getElementById('symbol').value.trim().toUpperCase();
+  const name = document.getElementById('name').value.trim();
+
+  if (!symbol || !name) {
+    alert('Preencha símbolo e nome');
+    return;
+  }
+
+  const res = await fetch(`${API_BASE_URL}/stocks`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ symbol, name })
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    alert(err.error || 'Erro ao cadastrar');
+    return;
+  }
+
+  document.getElementById('symbol').value = '';
+  document.getElementById('name').value = '';
+
+  loadStocks();
+}
+
+loadStocks();
+</script>
+
+</body>
+</html>
