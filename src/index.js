@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import { startPriceUpdater } from './cron/priceUpdater.js';
 
 import dashboardRoutes from './routes/dashboard.routes.js';
 import monitorRoutes from './routes/monitor.routes.js'; // 👈 IMPORTANTE
@@ -20,4 +21,6 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Backend running on port ${PORT}`);
 });
+startPriceUpdater();
+
 console.log('Index loaded');
