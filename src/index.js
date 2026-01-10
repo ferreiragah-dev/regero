@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { startPriceUpdater } from './cron/priceUpdater.js';
+import './cron/priceUpdater.js';
 
 import dashboardRoutes from './routes/dashboard.routes.js';
 import monitorRoutes from './routes/monitor.routes.js'; // 👈 IMPORTANTE

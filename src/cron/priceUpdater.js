@@ -1,36 +1,36 @@
-import { supabase } from "../services/supabase.js";
-import cron from "node-cron";
-import { fetchPrices } from "../services/market.js";
+import cron from 'node-cron';
+import { supabase } from '../services/supabase.js';
+import { getStockPrice } from '../services/market.js';
 
-cron.schedule("*/5 * * * *", async () => {
-  console.log("⏱ Atualizando preços...");
+console.log('[CRON] Price updater carregado');
+
+cron.schedule('*/1 * * * *', async () => {
+  console.log('[CRON] Atualizando preços...');
 
   const { data: stocks, error } = await supabase
-    .from("stocks")
-    .select("symbol");
+    .from('stocks')
+    .select('symbol');
 
   if (error) {
-    console.error("Erro ao buscar stocks:", error);
+    console.error('[CRON] Erro ao buscar stocks:', error);
     return;
   }
 
-  if (!stocks?.length) return;
+  for (const stock of stocks) {
+    const prices = await getStockPrice(stock.symbol);
 
-  const prices = await fetchPrices(stocks.map(s => s.symbol));
-
-  for (const p of prices) {
     await supabase
-      .from("stocks")
+      .from('stocks')
       .update({
-        price: p.price,
-        variation: p.variation,
-        open_price: p.open,
-        high_price: p.high,
-        low_price: p.low,
-        updated_at: new Date()
+        price: prices.price,
+        variation: prices.variation,
+        open: prices.open,
+        high: prices.high,
+        low: prices.low,
+        updated_at: new Date().toISOString()
       })
-      .eq("symbol", p.symbol);
+      .eq('symbol', stock.symbol);
   }
 
-  console.log("✅ Preços atualizados");
+  console.log('[CRON] Preços atualizados');
 });
