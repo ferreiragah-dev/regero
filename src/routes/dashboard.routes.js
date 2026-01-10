@@ -32,8 +32,8 @@ router.get('/dashboard', async (req, res) => {
 
   const result = data.map(stock => ({
     symbol: stock.symbol,
-    price: stock.last_price ?? stock.close_price ?? 0,
-    open: stock.open_price ?? 0,
+    price: stock.price ?? 0,
+    open: stock.open?? 0,
     variation: stock.variation ?? 0,
     monitor: stock.user_stocks.length > 0
   }));
