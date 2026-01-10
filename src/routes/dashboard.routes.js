@@ -1,13 +1,8 @@
-import { Router } from 'express';
-import { supabase } from '../services/supabase.js';
+import express from 'express';
+import { supabase } from '../supabase.js';
 
+const router = express.Router();
 
-const router = Router();
-
-/**
- * GET /api/dashboard
- * Retorna ações monitoradas pelo usuário
- */
 router.get('/dashboard', async (req, res) => {
   const userId = req.headers['x-user-id'];
 
@@ -15,35 +10,45 @@ router.get('/dashboard', async (req, res) => {
     return res.status(401).json({ error: 'User not authenticated' });
   }
 
-  const { data, error } = await supabase
+  // 1. Buscar símbolos monitorados pelo usuário
+  const { data: monitored, error: monitorError } = await supabase
+    .from('user_stocks')
+    .select('symbol')
+    .eq('user_id', userId);
+
+  if (monitorError) {
+    return res.status(500).json({ error: monitorError.message });
+  }
+
+  if (!monitored || monitored.length === 0) {
+    return res.json([]);
+  }
+
+  const symbols = monitored.map(s => s.symbol);
+
+  // 2. Buscar preços das ações
+  const { data: stocks, error: stockError } = await supabase
     .from('stocks')
     .select(`
       symbol,
-      price,
-      variation,
-      open,
-      high,
-      low,
-      user_stocks (
-        user_id
-      )
+      open_price,
+      close_price,
+      last_price,
+      variation
     `)
-    .eq('user_stocks.user_id', userId);
+    .in('symbol', symbols);
 
-  if (error) {
-    console.error('Dashboard error:', error);
-    return res.status(500).json({ error: error.message });
+  if (stockError) {
+    return res.status(500).json({ error: stockError.message });
   }
 
-  const result = data.map(stock => ({
+  // 3. Normalizar resposta (frontend NÃO conhece schema)
+  const result = stocks.map(stock => ({
     symbol: stock.symbol,
-    name: stock.name,
-    price: stock.price,
+    price: stock.last_price ?? stock.close_price,
+    open: stock.open_price,
     variation: stock.variation,
-    open: stock.open,
-    high: stock.high,
-    low: stock.low,
-    monitor: Array.isArray(stock.user_stocks) && stock.user_stocks.length > 0
+    monitor: true
   }));
 
   res.json(result);
