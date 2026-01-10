@@ -14,11 +14,14 @@ router.get('/dashboard', async (req, res) => {
   const { data, error } = await supabase
     .from('stocks')
     .select(`
-      symbol,
-      close_price,
-      last_price,
-      variation,
-      user_stocks!left(user_id)
+    symbol,
+    name,
+    price,
+    variation,
+    open,
+    high,
+    low,
+    user_stocks!left(user_id)
     `)
     .eq('user_stocks.user_id', userId);
 
@@ -30,6 +33,7 @@ router.get('/dashboard', async (req, res) => {
   const result = data.map(stock => ({
     symbol: stock.symbol,
     price: stock.last_price ?? stock.close_price ?? 0,
+    open: stock.open_price ?? 0,
     variation: stock.variation ?? 0,
     monitor: stock.user_stocks.length > 0
   }));
