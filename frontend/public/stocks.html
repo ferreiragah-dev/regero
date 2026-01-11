@@ -71,14 +71,53 @@
       justify-content: space-between;
       box-shadow: 0 4px 12px rgba(0,0,0,.05);
     }
+    .topbar {
+      height: 64px;
+      padding: 0 28px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+        .welcome {
+      font-size: 16px;
+      font-weight: 500;
+    }
 
+    .actions {
+      display: flex;
+      gap: 12px;
+    }
+
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+    }
+
+    .btn.primary {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+    }
     .symbol {
       font-weight: 600;
     }
   </style>
 </head>
 <body>
-
+<div class="topbar">
+  <div class="welcome">Olá, <strong>bem-vindo</strong></div>
+  <div class="actions">
+    <button class="btn">Conta</button>
+    <button class="btn primary" onclick="location.href='/stocks.html'">Monitorar</button>
+      <button id="logoutBtn" class="logout-btn">Sair</button>
+  </div>
+</div>
 <h1>📈 Cadastro de Ações</h1>
 
 <div class="card">

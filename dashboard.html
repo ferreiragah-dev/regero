@@ -163,6 +163,31 @@
     .label {
       color: #64748b;
     }
+
+    .logout-btn {
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: #f3f4f6;
+}
+
+body.dark .logout-btn {
+  border-color: #334155;
+  color: #e5e7eb;
+}
+
+body.dark .logout-btn:hover {
+  background: #1e293b;
+}
+
   </style>
 </head>
 <body>
@@ -173,6 +198,8 @@
     <div class="actions">
       <button class="btn">Conta</button>
       <button class="btn primary">Monitorar</button>
+      <button id="logoutBtn" class="logout-btn">Sair</button>
+
     </div>
   </div>
 
@@ -276,7 +303,14 @@
         </div>
       `).join('');
     }
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  // limpa sessão
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
 
+  // redireciona
+  window.location.href = '/login.html';
+});
     function toggleMonitor(i) {
       stocks[i].monitor = !stocks[i].monitor;
       render();
