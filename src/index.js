@@ -4,7 +4,7 @@ import cors from 'cors';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import stocksRoutes from './routes/stocks.routes.js';
 import marketRoutes from './routes/market.routes.js';
-
+import authRoutes from './routes/auth.routes.js';
 const app = express();
 
 /* 🔥 CORS PRIMEIRO */
@@ -17,6 +17,7 @@ app.use(cors({
 app.use(express.json());
 
 /* 🔥 ROTAS DEPOIS */
+app.use('/api', authRoutes);
 app.use('/api', dashboardRoutes);
 app.use('/api', stocksRoutes);
 app.use('/api', marketRoutes);
