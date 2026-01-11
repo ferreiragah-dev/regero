@@ -5,6 +5,8 @@ import dashboardRoutes from './routes/dashboard.routes.js';
 import stocksRoutes from './routes/stocks.routes.js';
 import marketRoutes from './routes/market.routes.js';
 import authRoutes from './routes/auth.routes.js';
+import candlesRoutes from './routes/candles.routes.js';
+
 const app = express();
 
 /* 🔥 CORS PRIMEIRO */
@@ -21,6 +23,7 @@ app.use('/api', authRoutes);
 app.use('/api', dashboardRoutes);
 app.use('/api', stocksRoutes);
 app.use('/api', marketRoutes);
+app.use('/api', candlesRoutes);
 
 app.get('/health', (_, res) => res.send('OK'));
 
